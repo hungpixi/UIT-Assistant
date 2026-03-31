@@ -7,13 +7,23 @@ let state = "IDLE";
 // ─────────────────────────────────────────────
 // KHỞI CÀI ĐẶT khi Extension được nạp lần đầu
 // ─────────────────────────────────────────────
-chrome.runtime.onInstalled.addListener(() => {
-  chrome.storage.local.set({ schedule: [], zaloGroup: "", isActive: true });
+chrome.runtime.onInstalled.addListener((details) => {
+  // Chỉ khởi tạo nếu là lần đầu cài đặt (install)
+  // Nếu là cập nhật (update) hoặc reload thì giữ nguyên dữ liệu cũ
+  if (details.reason === "install") {
+    chrome.storage.local.set({ schedule: [], zaloGroup: "", isActive: true });
+    console.log("[UIT] Lần đầu cài đặt: Khởi tạo Storage.");
+  }
+  
   // Alarm nhẹ: check 1 lần / 5 phút. Chrome alarm KHÔNG tốn RAM.
-  chrome.alarms.create("lifecycleCheck", { periodInMinutes: 5 });
+  chrome.alarms.get("lifecycleCheck", (a) => {
+    if (!a) chrome.alarms.create("lifecycleCheck", { periodInMinutes: 5 });
+  });
   // Update checker: 12 tiếng / 1 lần
-  chrome.alarms.create("updateCheck", { periodInMinutes: 720 });
-  console.log("[UIT v1.9] Extension installed. Alarms set.");
+  chrome.alarms.get("updateCheck", (a) => {
+    if (!a) chrome.alarms.create("updateCheck", { periodInMinutes: 720 });
+  });
+  console.log("[UIT v1.9] Extension ready. Alarms checked.");
   
   checkForUpdates();
 });
@@ -108,26 +118,54 @@ chrome.alarms.onAlarm.addListener((alarm) => {
 // ĐÁNH THỨC Teams
 // ─────────────────────────────────────────────
 function wakeUpTeams(classInfo) {
+  // Tự động cấp quyền Notifications, Cam, Mic cho Teams để khỏi hiện bảng hỏi
+  const teamsPattern = "https://teams.cloud.microsoft/*";
+  if (chrome.contentSettings) {
+    chrome.contentSettings.notifications.set({ primaryPattern: teamsPattern, setting: "allow" });
+    chrome.contentSettings.camera.set({ primaryPattern: teamsPattern, setting: "allow" });
+    chrome.contentSettings.microphone.set({ primaryPattern: teamsPattern, setting: "allow" });
+  }
+
   chrome.tabs.query({ url: "*://teams.cloud.microsoft/*" }, (tabs) => {
-    if (tabs.length > 0) {
+    if (chrome.runtime.lastError) {
+      console.warn("[UIT] Query error (No window?):", chrome.runtime.lastError.message);
+      return;
+    }
+
+    if (tabs && tabs.length > 0) {
       // Đã có tab Teams → gửi lệnh WAKE_UP
       tabs.forEach(tab => {
-        chrome.tabs.sendMessage(tab.id, {
-          type: "WAKE_UP",
-          classInfo: classInfo
-        });
+        if (tab && tab.id) {
+          chrome.tabs.sendMessage(tab.id, {
+            type: "WAKE_UP",
+            classInfo: classInfo
+          }, () => {
+             if (chrome.runtime.lastError) { /* ignore closed tab error */ }
+          });
+        }
       });
       state = "WATCHING";
     } else {
       // Chưa có tab Teams → mở mới
       chrome.tabs.create({ url: "https://teams.cloud.microsoft", active: false }, (tab) => {
+        if (chrome.runtime.lastError || !tab || !tab.id) {
+          console.error("[UIT] Failed to create Teams tab or no window available.");
+          return;
+        }
+
         // Content script sẽ tự nhận WAKE_UP sau khi load xong vì state = WATCHING
         state = "WATCHING";
         // Sau 8 giây chờ Teams load, gửi wake up
+        const targetTabId = tab.id;
         setTimeout(() => {
-          chrome.tabs.sendMessage(tab.id, {
-            type: "WAKE_UP",
-            classInfo: classInfo
+          // Check lại xem tab còn sống không trước khi gửi
+          chrome.tabs.get(targetTabId, (currentTab) => {
+            if (!chrome.runtime.lastError && currentTab && currentTab.id) {
+              chrome.tabs.sendMessage(currentTab.id, {
+                type: "WAKE_UP",
+                classInfo: classInfo
+              }, () => { if (chrome.runtime.lastError) {} });
+            }
           });
         }, 8000);
       });
@@ -140,7 +178,16 @@ function wakeUpTeams(classInfo) {
 // ─────────────────────────────────────────────
 function sendSleepToTeams() {
   chrome.tabs.query({ url: "*://teams.cloud.microsoft/*" }, (tabs) => {
-    tabs.forEach(tab => chrome.tabs.sendMessage(tab.id, { type: "SLEEP_NOW" }));
+    if (chrome.runtime.lastError) return;
+    if (tabs && tabs.length > 0) {
+      tabs.forEach(tab => {
+        if (tab && tab.id) {
+          chrome.tabs.sendMessage(tab.id, { type: "SLEEP_NOW" }, () => {
+            if (chrome.runtime.lastError) {} 
+          });
+        }
+      });
+    }
   });
 }
 
@@ -180,11 +227,17 @@ chrome.runtime.onMessage.addListener((req, sender, sendResponse) => {
     // Lưu tạm thời link này vào Storage để Popup UI có thể móc ra hiện Icon Video
     chrome.storage.local.set({ lastMeetingLink: joinUrl, lastMeetingClass: req.courseName, lastMeetingTime: Date.now() });
 
-    chrome.tabs.create({ url: joinUrl, active: true });
+    chrome.tabs.create({ url: joinUrl, active: true }, (tab) => {
+      if (chrome.runtime.lastError) {
+        console.warn("[UIT] Join tab creation failed:", chrome.runtime.lastError.message);
+      }
+    });
 
     // 3. Tắt Observer → IDLE
-    if (sender?.tab) {
-      chrome.tabs.sendMessage(sender.tab.id, { type: "SLEEP_NOW" });
+    if (sender && sender.tab && sender.tab.id) {
+      chrome.tabs.sendMessage(sender.tab.id, { type: "SLEEP_NOW" }, () => {
+        if (chrome.runtime.lastError) {} 
+      });
     }
     sendSleepToTeams();
     state = "IDLE";
@@ -273,7 +326,9 @@ async function checkForUpdates() {
 chrome.notifications.onClicked.addListener((notificationId) => {
   if (notificationId === "update_notifier") {
     // Mở trang Repo GitHub để tải mới
-    chrome.tabs.create({ url: "https://github.com/hungpixi/UIT-Assistant" });
+    chrome.tabs.create({ url: "https://github.com/hungpixi/UIT-Assistant" }, (tab) => {
+       if (chrome.runtime.lastError) {}
+    });
     // Xóa notif
     chrome.notifications.clear("update_notifier");
   }

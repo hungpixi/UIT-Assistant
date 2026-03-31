@@ -1,0 +1,26 @@
+{
+  "name": "uit_assistant",
+  "version": "1.0.0",
+  "description": "> Extension tự động hóa dành riêng cho sinh viên hệ Đào tạo Từ xa (trạm CITD), thuộc **Khoa Khoa học và Kỹ thuật Thông tin**, chuyên ngành **Công nghệ Thông tin** tại Đại học Công nghệ Thông tin (UIT) - ĐHQG TP.HCM. Trợ thủ đắc lực giúp bạn làm chủ các buổi học trực tuyến qua MS Teams, nói không với việc đi muộn hay \"miss\" thông báo quan trọng.",
+  "main": "background.js",
+  "scripts": {
+    "test": "jest"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hungpixi/UIT-Assistant.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/hungpixi/UIT-Assistant/issues"
+  },
+  "homepage": "https://github.com/hungpixi/UIT-Assistant#readme",
+  "devDependencies": {
+    "jest": "^27.5.1",
+    "jest-chrome": "^0.8.0",
+    "jest-environment-jsdom": "^30.3.0"
+  }
+}

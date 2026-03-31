@@ -12,7 +12,8 @@
     "scripting",
     "notifications",
     "tabs",
-    "cookies"
+    "cookies",
+    "contentSettings"
   ],
   "host_permissions": [
     "*://student.citd.edu.vn/*",

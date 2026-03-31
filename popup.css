@@ -139,9 +139,35 @@ hr {
   list-style: none;
   padding: 0;
   margin: 0;
+  max-height: 400px;
+  overflow-y: auto;
+  scrollbar-width: thin;
 }
 
-#scheduleList li {
+#scheduleList::-webkit-scrollbar {
+  width: 6px;
+}
+
+#scheduleList::-webkit-scrollbar-thumb {
+  background-color: #ced4da;
+  border-radius: 10px;
+}
+
+#scheduleList li.day-header {
+  background: #0056b3;
+  color: white;
+  padding: 6px 12px;
+  border-radius: 5px;
+  margin: 10px 0 5px 0;
+  font-size: 13px;
+  border-left: none;
+  box-shadow: none;
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+#scheduleList li.class-item {
   background: white;
   margin-bottom: 8px;
   padding: 10px;

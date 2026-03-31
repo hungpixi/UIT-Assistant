@@ -39,38 +39,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Load Schedule & Meeting Link
   chrome.storage.local.get(["schedule", "lastMeetingLink", "lastMeetingClass", "lastMeetingTime"], (data) => {
-    const list = data.schedule || [];
-    scheduleList.innerHTML = "";
-    
     // 1. Render Schedule
-    if (list.length === 0) {
-      scheduleList.innerHTML = `<li class="empty-state">Hôm nay rảnh rang! Không có lớp nào.</li>`;
-      btnSyncTKB.textContent = "Quét Lịch Ngay";
-    } else {
-      btnSyncTKB.innerHTML = "✅ Đã Đồng Bộ TKB";
-      btnSyncTKB.classList.remove("highlight");
-      btnSyncTKB.style.backgroundColor = "#28a745";
-      btnSyncTKB.style.borderColor = "#28a745";
-      btnSyncTKB.style.color = "white";
-
-      // Render lịch học
-      const now = new Date();
-      const dayMap = {
-        "Chủ nhật": 0, "Thứ 2": 1, "Thứ 3": 2,
-        "Thứ 4": 3, "Thứ 5": 4, "Thứ 6": 5, "Thứ 7": 6
-      };
-
-      const todayClasses = list.filter(item => dayMap[item.day] === now.getDay());
-      if (todayClasses.length === 0) {
-        scheduleList.innerHTML = `<li class="empty-state">Hôm nay không có lớp, nhậu thôi! 🍻</li>`;
-      } else {
-        todayClasses.forEach(item => {
-          const li = document.createElement("li");
-          li.innerHTML = `<span class="time-badge">${item.time}</span> <strong>${item.name}</strong><br>👨‍🏫 ${item.teacher}`;
-          scheduleList.appendChild(li);
-        });
-      }
-    }
+    renderScheduleList(data.schedule || [], scheduleList, btnSyncTKB);
 
     // 2. Hiển thị nút VÀO LỚP (Nếu đang có link bắt được)
     if (data.lastMeetingLink && data.lastMeetingTime) {
@@ -79,7 +49,9 @@ document.addEventListener('DOMContentLoaded', () => {
         activeLinkContainer.style.display = 'block';
         meetingClassName.textContent = data.lastMeetingClass || "Lớp học";
         btnOpenMeeting.onclick = () => {
-           chrome.tabs.create({ url: data.lastMeetingLink, active: true });
+           chrome.tabs.create({ url: data.lastMeetingLink, active: true }, (tab) => {
+             if (chrome.runtime.lastError) {}
+           });
         };
       }
     }
@@ -103,24 +75,39 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Checklist Actions
   btnLoginPortal.addEventListener('click', () => {
-    chrome.tabs.create({ url: "https://student.citd.edu.vn/signin" });
+    chrome.tabs.create({ url: "https://student.citd.edu.vn/signin" }, (tab) => {
+      if (chrome.runtime.lastError) {}
+    });
   });
 
   btnSyncTKB.addEventListener('click', () => {
-    chrome.tabs.create({ url: "https://student.citd.edu.vn/projects" });
+    chrome.tabs.create({ url: "https://student.citd.edu.vn/projects" }, (tab) => {
+      if (chrome.runtime.lastError) {}
+    });
   });
 
   btnOpenTeams.addEventListener('click', () => {
-    chrome.tabs.create({ url: "https://teams.cloud.microsoft" });
+    chrome.tabs.create({ url: "https://teams.cloud.microsoft" }, (tab) => {
+      if (chrome.runtime.lastError) {}
+    });
   });
 
   // V1.9 Bấm nút từ Popup -> Gọi thẳng content script của Teams (nếu đang bật)
   btnAutoTeams.addEventListener('click', () => {
     chrome.tabs.query({ url: ["*://teams.cloud.microsoft/*", "*://teams.microsoft.com/*"] }, (tabs) => {
-      if (tabs.length > 0) {
+      if (chrome.runtime.lastError) {
+        console.error(chrome.runtime.lastError);
+        return;
+      }
+      
+      if (tabs && tabs.length > 0 && tabs[0].id) {
         // Tab Teams đã mở, ném mìn WAKE UP MACRO xuống
         chrome.tabs.sendMessage(tabs[0].id, { type: "RUN_MACRO", target: "teams" }, (res) => {
-           if(res && res.status === "started") {
+           if (chrome.runtime.lastError) {
+             console.warn("[UIT] Popup to Teams channel failed.");
+             return;
+           }
+           if (res && res.status === "started") {
              btnAutoTeams.innerHTML = "✅ Đang Chạy Macro...";
              btnAutoTeams.classList.remove("highlight");
              btnAutoTeams.style.backgroundColor = "#28a745";
