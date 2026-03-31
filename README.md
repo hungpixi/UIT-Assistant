@@ -1,11 +1,26 @@
 # 🎓 UIT Student Assistant v1.9
 
-> Extension mạnh mẽ dành riêng cho sinh viên Khoa học Máy tính & Mạng máy tính tại Đại học Công nghệ Thông tin (UIT) - ĐHQG TP.HCM. Tự động hóa quá trình học tập, nói không với việc đi học muộn hay miss thông báo quan trọng.
+> Extension tự động hóa dành riêng cho sinh viên hệ Đào tạo Từ xa (trạm CITD), thuộc **Khoa Khoa học và Kỹ thuật Thông tin**, chuyên ngành **Công nghệ Thông tin** tại Đại học Công nghệ Thông tin (UIT) - ĐHQG TP.HCM. Trợ thủ đắc lực giúp bạn làm chủ các buổi học trực tuyến qua MS Teams, nói không với việc đi muộn hay "miss" thông báo quan trọng.
 
 ![Version](https://img.shields.io/badge/version-1.9-blue.svg)
 ![Platform](https://img.shields.io/badge/platform-Chrome%20Extension-success.svg)
 ![Author](https://img.shields.io/badge/author-Hungpixi-orange.svg)
 
+## 💡 Đặt vấn đề & Quá trình suy nghĩ (Context)
+
+Là một sinh viên chuyên ngành Công nghệ Thông tin theo học hệ từ xa (CITD) tại UIT, 100% thời lượng học tập của chúng ta diễn ra trực tuyến thông qua nền tảng **Microsoft Teams**. Tuy nhiên, trải nghiệm học thực tế lại phát sinh quá nhiều thao tác thủ công và bất tiện:
+
+- ❌ **Lịch học rời rạc:** Lịch học được báo thường xuyên trên Portal CITD, nhưng lại chẳng dính dáng gì đến ứng dụng Lịch (Calendar) trên MS Teams. Nếu không tự nhớ hoặc đi hẹn báo thức bằng tay, khả năng "ngủ quên" giờ học là cực kỳ cao.
+- ❌ **Lỡ mất Link vào lớp:** Giảng viên thường tung link "Join Meeting" đột ngột vào channel *Chung (General)* của môn học. Rất nhiều sinh viên bị "lỡ đò" chỉ vì Teams không ưu tiên nổ thông báo. Muốn không lỡ? Phải đi click tay `Bật Cảnh Báo (Banner and Feed)` cho từng môn một, mỗi học kỳ lại phải mở lên click lại cho cả chục môn – quá rườm rà!
+- ❌ **Sự cố Camera & Mic:** Luống cuống bấm Link chạy nhanh vào lớp lúc trễ giờ khiến nhiều anh em quên check lại Mic hoặc Camera ở màn hình chờ (Pre-join screen), dẫn đến những khoảnh khắc "quê xệ" lọt âm thanh đời tư vào lớp.
+- ❌ **Sát thủ diệt RAM:** Treo các phần mềm chạy ngầm cảnh báo hoặc bật sẵn trình duyệt chờ link 24/7 chỉ để ngóng xem có đi học không là sự lãng phí tài nguyên RAM vô nghĩa.
+
+**🎯 Giải pháp (The Solution):**
+Xuất phát từ nỗi đau trên, với tư duy của một dân IT *"Lười biếng để thúc đẩy năng suất"*, **UIT Assistant** ra đời nhằm giải phóng sức lao động thông qua tự động hóa:
+1. **Sức mạnh đồng bộ:** Một cú click quẹt toàn bộ lịch trên CITD về lưu trữ mà không cần gõ phím.
+2. **Kiến trúc Vòng đời thông minh (Smart Lifecycle):** Bot ngủ đông hoàn toàn khi không có lớp, **0% tốn RAM**. Nó chỉ "thức dậy" khi chẩn đoán sắp đến giờ học rồi lén mở dần cảm biến trên MS Teams.
+3. **Bot Auto-Notify:** Dùng bot mô phỏng hành vi để tự chui vào mười mấy môn học gạt công tắc nhận cảnh báo tự động thay cho người dùng.
+4. **Auto-Join Tàng hình:** Tốc độ tóm link ánh sáng! Ngay khi Giảng viên thả link, công cụ tiêm thẳng Params vào URL để khoá mõm Mic và dập Camera từ trong trứng nước trước khi nhảy mượt vào lớp, bảo vệ tuyệt đối hình ảnh sinh viên.
 ## 🚀 Tính năng nổi bật
 
 - **Đồng Bộ TKB Tự Động**: Quét và lưu trữ Thời khóa biểu từ CITD Student Portal.
