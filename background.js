@@ -11,7 +11,11 @@ chrome.runtime.onInstalled.addListener(() => {
   chrome.storage.local.set({ schedule: [], zaloGroup: "", isActive: true });
   // Alarm nhẹ: check 1 lần / 5 phút. Chrome alarm KHÔNG tốn RAM.
   chrome.alarms.create("lifecycleCheck", { periodInMinutes: 5 });
-  console.log("[UIT v1.6] Extension installed. Lifecycle alarm set.");
+  // Update checker: 12 tiếng / 1 lần
+  chrome.alarms.create("updateCheck", { periodInMinutes: 720 });
+  console.log("[UIT v1.9] Extension installed. Alarms set.");
+  
+  checkForUpdates();
 });
 
 // Khi Chrome restart, alarm tự tạo lại nếu chưa có
@@ -19,6 +23,11 @@ chrome.runtime.onStartup.addListener(() => {
   chrome.alarms.get("lifecycleCheck", (a) => {
     if (!a) chrome.alarms.create("lifecycleCheck", { periodInMinutes: 5 });
   });
+  chrome.alarms.get("updateCheck", (a) => {
+    if (!a) chrome.alarms.create("updateCheck", { periodInMinutes: 720 });
+  });
+  
+  checkForUpdates();
 });
 
 // ─────────────────────────────────────────────
@@ -52,9 +61,14 @@ function getImminentClass(schedule) {
 }
 
 // ─────────────────────────────────────────────
-// VÒNG ĐỜI: Chạy mỗi 5 phút
+// VÒNG ĐỜI: Chạy mỗi 5 phút hoặc Check Update
 // ─────────────────────────────────────────────
 chrome.alarms.onAlarm.addListener((alarm) => {
+  if (alarm.name === "updateCheck") {
+    checkForUpdates();
+    return;
+  }
+
   if (alarm.name !== "lifecycleCheck") return;
 
   chrome.storage.local.get(["schedule", "isActive"], ({ schedule, isActive }) => {
@@ -226,3 +240,41 @@ function buildJoinUrl(originalLink) {
     return originalLink;
   }
 }
+
+// ─────────────────────────────────────────────
+// AUTO UPDATE NOTIFIER (V1.9)
+// ─────────────────────────────────────────────
+async function checkForUpdates() {
+  try {
+    const remoteUrl = "https://raw.githubusercontent.com/hungpixi/UIT-Assistant/master/manifest.json";
+    const res = await fetch(remoteUrl, { cache: "no-store" });
+    const remoteManifest = await res.json();
+    const localVersion = chrome.runtime.getManifest().version;
+    const remoteVersion = remoteManifest.version;
+
+    // So sánh chuỗi semantic version đơn giản (vd: "1.9" < "2.0")
+    if (remoteVersion && remoteVersion !== localVersion && remoteVersion.localeCompare(localVersion, undefined, { numeric: true, sensitivity: 'base' }) > 0) {
+      console.log(`[UIT Auto-Update] Có bản mới: v${remoteVersion}. Máy đang chạy: v${localVersion}`);
+      
+      chrome.notifications.create("update_notifier", {
+        type: "basic",
+        iconUrl: "icon128.png",
+        title: `🎉 UIT Assistant v${remoteVersion} Đã Ra Mắt!`,
+        message: `Bạn đang dùng v${localVersion}. Click vào đây để tải ngay bản mới siêu xịn từ Github nhé!`,
+        requireInteraction: true
+      });
+    }
+  } catch (err) {
+    console.error("[UIT Auto-Update] Lỗi check version:", err);
+  }
+}
+
+// Bắt sự kiện người dùng Click vào Notification Update
+chrome.notifications.onClicked.addListener((notificationId) => {
+  if (notificationId === "update_notifier") {
+    // Mở trang Repo GitHub để tải mới
+    chrome.tabs.create({ url: "https://github.com/hungpixi/UIT-Assistant" });
+    // Xóa notif
+    chrome.notifications.clear("update_notifier");
+  }
+});

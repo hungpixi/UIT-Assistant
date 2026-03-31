@@ -16,16 +16,24 @@
 - **Auto-Notification Bot (V1.9 New ✨)**: Auto Macro tự động dò tìm cấu hình tắt/bật thông báo kênh trên Teams. Kích hoạt chỉ với 1 Click từ Popup, Bot sẽ cài lại toàn bộ cấu hình hiển thị Biểu Ngữ (Banner) khi có link học tiết mới nhất.
 - **Floating UI Tools**: Truy cập siêu nhanh các tools cho sinh viên UIT từ màn hình Teams học.
 
-## 📥 Cài đặt nhanh (Dành cho Developer)
+## 📥 Cài đặt nhanh
 
-1. Clone repo này về máy tính bằng [GitHub CLI](https://cli.github.com/):
-   ```bash
-   gh repo clone <your-username>/UIT-Assistant
-   ```
-2. Mở trình duyệt Chrome/Edge và truy cập vào `chrome://extensions/`.
-3. Bật **Developer mode** ở góc phải trên.
-4. Bấm **Load unpacked** và chọn đến thư mục gốc của repo vừa clone.
-5. Cắm ghim Extension lại trên thanh Toolbar và bắt đầu lười biếng một cách năng suất nhé! 😎
+### Cách 1: Tải về thủ công (Dành cho Sinh viên/Người dùng thường)
+1. Bấm vào nút màu xanh lá cây **Code** ở trên cùng trang này > Chọn **Download ZIP** để tải toàn bộ thư mục về máy tính.
+2. Giải nén thư mục vừa tải về.
+3. Mở trình duyệt Chrome/Edge và truy cập vào địa chỉ: `chrome://extensions/`.
+4. Bật công tắc **Developer mode** ở góc phải trên.
+5. Bấm nút **Load unpacked** (Tải tiện ích đã giải nén) và chọn đến thư mục bạn vừa giải nén lúc nãy.
+6. Cắm ghim Extension lại trên thanh Toolbar và bắt đầu lười biếng một cách năng suất nhé! 😎
+
+> 💡 **Khó Ư? Đừng Lo!** Bạn nào đọc mà không biết cài thì cứ liên hệ thẳng Zalo: **0834.422.439** nhé, tớ sẽ xếp lịch UltraView qua cài hộ tận máy cho, đảm bảo dễ ẹt! 🩺
+
+### Cách 2: Bằng dòng lệnh (Dành cho Developer)
+Clone repo thẳng vào máy tính bằng [GitHub CLI](https://cli.github.com/):
+```bash
+gh repo clone hungpixi/UIT-Assistant
+```
+*(Clone xong thì lặp lại từ Bước 3 của Cách 1 nha)*
 
 ## 🖥 Hướng dẫn sử dụng
 
