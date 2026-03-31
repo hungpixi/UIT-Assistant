@@ -1,0 +1,53 @@
+{
+  "manifest_version": 3,
+  "name": "UIT Student Assistant",
+  "version": "1.9",
+  "description": "Tự động theo dõi lịch học, tự động Join Meeting và Bypass sảnh Pre-join.",
+  "icons": {
+    "128": "icon128.png"
+  },
+  "permissions": [
+    "storage",
+    "alarms",
+    "scripting",
+    "notifications",
+    "tabs",
+    "cookies"
+  ],
+  "host_permissions": [
+    "*://student.citd.edu.vn/*",
+    "*://teams.cloud.microsoft/*",
+    "*://teams.microsoft.com/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": "icon128.png",
+    "default_title": "UIT Assistant - Hungpixi"
+  },
+  "content_scripts": [
+    {
+      "matches": ["*://student.citd.edu.vn/projects*"],
+      "js": ["content_citd.js"],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": ["*://teams.cloud.microsoft/*", "*://teams.microsoft.com/*"],
+      "js": ["content_teams.js", "content_macro.js"],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": ["*://teams.cloud.microsoft/meetup-join/*", "*://teams.microsoft.com/dl/launcher/*", "*://teams.microsoft.com/v2/*"],
+      "js": ["content_prejoin.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["icon128.png"],
+      "matches": ["*://teams.cloud.microsoft/*", "*://teams.microsoft.com/*"]
+    }
+  ]
+}

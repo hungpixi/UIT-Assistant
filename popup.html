@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title>UIT Assistant Setup</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="header">
+    <img src="icon128.png" alt="Logo" class="logo">
+    <h1>UIT ASSISTANT v1.9</h1>
+  </div>
+
+  <!-- Box trạng thái bot -->
+  <div class="status-box" id="statusBox">
+    <div class="status-indicator"></div>
+    <span id="statusText">Trạng thái: Đang load...</span>
+  </div>
+
+  <hr>
+
+  <!-- Setup Wizard -->
+  <div class="wizard">
+    <h3>⚙️ Setup Nhanh (3 Bước)</h3>
+    <p class="subtitle">Hoàn thành để Bot tự động làm việc</p>
+    
+    <div class="step" id="step1">
+      <div class="step-icon">1️⃣</div>
+      <div class="step-content">
+        <label>Đăng nhập Portal CITD</label>
+        <button id="btnLoginPortal" class="action-btn">Mở Cổng Sinh Viên</button>
+      </div>
+    </div>
+
+    <div class="step" id="step2">
+      <div class="step-icon">2️⃣</div>
+      <div class="step-content">
+        <label>Đồng Bộ Lịch Học</label>
+        <button id="btnSyncTKB" class="action-btn highlight">Quét Lịch Ngay</button>
+      </div>
+    </div>
+
+    <div class="step" id="step3">
+      <div class="step-icon">3️⃣</div>
+      <div class="step-content">
+        <label>Mở Tab MS Teams</label>
+        <button id="btnOpenTeams" class="action-btn">Mở MS Teams</button>
+      </div>
+    </div>
+
+    <!-- V1.9 Auto Macro Step -->
+    <div class="step" id="step4">
+      <div class="step-icon">4️⃣</div>
+      <div class="step-content">
+        <label>Bật Cảnh Báo All Môn</label>
+        <button id="btnAutoTeams" class="action-btn highlight">Cài Auto-Notify</button>
+      </div>
+    </div>
+  </div>
+
+  <hr>
+
+  <!-- Box lịch học -->
+  <div class="card" id="schedule-box">
+    <h4><span class="icon">📚</span> Lịch Học Hôm Nay</h4>
+    <!-- V1.9: Nút Mở Nhanh Link (Video Icon) Nếu Đã Có Link -->
+    <div id="active-link-container" style="display: none; padding-bottom: 12px; border-bottom: 1px dashed #e0e0e0; margin-bottom: 10px;">
+       <button id="btnOpenMeeting" class="btn btn-success" style="width: 100%; font-size: 13px; font-weight: 600; padding: 10px; background-color: #28a745; display: flex; align-items: center; justify-content: center; gap: 8px;">
+          <span style="font-size: 16px;">🎥</span> <span>Vào Lớp: <b id="meeting-className"></b></span>
+       </button>
+       <div style="font-size: 10px; color: #666; text-align: center; margin-top: 4px;">Tham gia bằng Link MS Teams lúc nãy</div>
+    </div>
+    
+    <ul class="schedule-list" id="scheduleList">
+      <li class="empty-state">Đang tải lịch...</li>
+    </ul>
+  </div>
+
+  <div class="credit">
+    ✨ Designed with ❤️ by <a href="http://zalo.me/0834422439" target="_blank" style="color: #0056b3; font-weight: bold; text-decoration: none;">Hungpixi</a>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
