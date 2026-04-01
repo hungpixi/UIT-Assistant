@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "UIT Student Assistant",
-  "version": "2.0",
+  "version": "2.1",
   "description": "Tự động theo dõi lịch học, tự động Join Meeting và Bypass sảnh Pre-join.",
   "icons": {
     "128": "icon128.png"
