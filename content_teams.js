@@ -7,6 +7,7 @@ console.log("[UIT Teams] Module loaded. Waiting for WAKE_UP signal...");
 let observer = null;
 let scheduleData = [];
 let classInfo = null;
+let recentAttachments = []; // V2.0 Array for attachment tracking
 
 // ─────────────────────────────────────────────
 // NHẬN LỆNH TỪ BACKGROUND
@@ -227,12 +228,16 @@ function checkNode(node) {
 
   const html = node.innerHTML;
 
+  // Tìm tên người gửi (leo ngược DOM)
+  const senderName = getSenderName(node);
+
+  // V2.0: Theo dõi sự kiện nộp bài tập (ảnh/file)
+  detectAttachments(node, senderName);
+
   // Kiểm tra có link meeting không
   const hasMeetingLink = html.includes("meetup-join") || html.includes("Tham gia cuộc họp");
   if (!hasMeetingLink) return;
 
-  // Tìm tên người gửi (leo ngược DOM)
-  const senderName = getSenderName(node);
   console.log("[UIT Teams] Meeting link detected. Sender:", senderName);
 
   // Đối chiếu với danh sách GV trong TKB
@@ -253,6 +258,47 @@ function checkNode(node) {
 
   // Báo về background
   reportClassDetected(matched.name, senderName, meetingLink);
+}
+
+// ─────────────────────────────────────────────
+// PHÂN TÍCH ĐÍNH KÈM / BÀI TẬP (V2.0)
+// ─────────────────────────────────────────────
+function detectAttachments(node, senderName) {
+  // Tìm các thẻ img (thường là ảnh được gửi lên) 
+  // Loại trừ avatar profile picture
+  const imgs = Array.from(node.querySelectorAll('img')).filter(img => {
+    const src = img.src || "";
+    // Bỏ qua các hình ảnh của avatar, icon, emoji
+    return !src.includes("avatar") && !src.includes("profile") && !src.includes("emoji");
+  });
+
+  // Tìm các thẻ đính kèm mang ý nghĩa là file Word/PDF/File nén
+  const files = node.querySelectorAll('[data-tid="message-attachment"], .ui-chat__message__attachment');
+
+  if (imgs.length > 0 || files.length > 0) {
+    const now = Date.now();
+    
+    // Thêm mốc thời gian vào mảng
+    recentAttachments.push(now);
+
+    // Xoá các mốc thời gian cũ hơn 60 giây (1 phút)
+    recentAttachments = recentAttachments.filter(time => now - time <= 60000);
+
+    // Nếu có 2 file đính kèm trở lên trong vòng 1 phút
+    if (recentAttachments.length >= 2) {
+      console.log("[UIT Teams] Phát hiện nhiều file đính kèm! Cảnh báo nộp bài tập.");
+      
+      chrome.runtime.sendMessage({
+        type: "SEND_NOTIFICATION", 
+        title: "🚨 Báo động Nộp Bài Tập!",
+        message: `Mọi người đang gửi ảnh/file liên tục (Có thể thầy giao bài). Vào check ngay!`,
+        requireInteraction: true
+      });
+
+      // Clear mảng để tránh spam liên tục
+      recentAttachments = [];
+    }
+  }
 }
 
 // ─────────────────────────────────────────────

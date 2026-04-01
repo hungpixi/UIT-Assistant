@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title>UIT Assistant - Settings Dashboard</title>
+  <link rel="stylesheet" href="dashboard.css">
+</head>
+<body>
+  <div class="dashboard-container">
+    <aside class="sidebar">
+      <div class="logo-container">
+        <img src="icon128.png" alt="Logo" class="logo">
+        <h2>UIT Assistant</h2>
+        <span class="version">v2.0</span>
+      </div>
+      <nav class="nav-menu">
+        <a href="#tab-schedule" class="nav-item active" data-tab="tab-schedule">🗓️ Lịch Học</a>
+        <a href="#tab-teachers" class="nav-item" data-tab="tab-teachers">👨‍🏫 Cấu Hình Giảng Viên</a>
+        <a href="#tab-notifications" class="nav-item" data-tab="tab-notifications">🔔 Thông Báo & Log</a>
+        <a href="#tab-about" class="nav-item" data-tab="tab-about">ℹ️ Thông Tin</a>
+      </nav>
+    </aside>
+
+    <main class="main-content">
+      <header class="top-bar">
+        <h1>Dashboard Cài Đặt CHUYÊN SÂU</h1>
+        <div class="status-badge" id="botStatus">Đang kiểm tra...</div>
+      </header>
+
+      <div class="content-area">
+        <!-- TAB: SCHEDULE -->
+        <section id="tab-schedule" class="tab-pane active">
+          <h3>Tổng Quan Lịch Học Trong Tuần</h3>
+          <div class="schedule-grid" id="scheduleGrid">
+            <!-- Schedule items will be injected here -->
+            <p class="text-muted">Đang tải dữ liệu...</p>
+          </div>
+        </section>
+
+        <!-- TAB: TEACHERS CONFIG -->
+        <section id="tab-teachers" class="tab-pane">
+          <div class="header-with-actions">
+            <h3>Tùy Chỉnh Giờ Học Theo Giảng Viên</h3>
+            <button id="btnSaveConfigs" class="btn btn-primary">💾 Lưu Cấu Hình</button>
+          </div>
+          <p class="text-muted" style="margin-bottom: 20px;">
+            Mỗi giáo viên có thói quen lên lớp khác nhau. Bạn có thể thiết lập thời gian bắt đầu trễ (VD: +15 phút) hoặc sớm (VD: -5 phút) để Bot hoạt động chính xác hơn.
+          </p>
+          
+          <div class="teacher-list" id="teacherConfigList">
+            <!-- Teacher configs will be injected here -->
+          </div>
+        </section>
+
+        <!-- TAB: NOTIFICATIONS & LOGS -->
+        <section id="tab-notifications" class="tab-pane">
+          <h3>Trình Quản Lý Thông Báo & Lịch Sử Hoạt Động</h3>
+          
+          <div class="glass-card mb-4">
+            <h4>Tạo Thông Báo Thử Nghiệm</h4>
+            <div class="form-group row">
+              <input type="text" id="notifTitle" placeholder="Tiêu đề thông báo" class="form-control flex-1">
+              <input type="text" id="notifMessage" placeholder="Nội dung nhắc nhở..." class="form-control flex-2">
+              <button id="btnTestNotif" class="btn btn-accent">Thử Nghiệm</button>
+            </div>
+          </div>
+
+          <div class="glass-card">
+            <h4>Lịch Sử Bot Hoạt Động (Logs)</h4>
+            <div class="log-container" id="logList">
+              <!-- Logs injected here -->
+              <p class="text-muted">Chưa có hoạt động nào được ghi nhận.</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- TAB: ABOUT -->
+        <section id="tab-about" class="tab-pane">
+          <div class="glass-card text-center" style="padding: 40px;">
+            <img src="icon128.png" style="width: 100px; margin-bottom: 20px;">
+            <h2>UIT Student Assistant - Advanced Update</h2>
+            <p>Trợ lý tự động hóa quá trình học tập Microsoft Teams cho Sinh viên UIT.</p>
+            <p>Version 2.0 - Tích hợp Notifications tuỳ chỉnh và AI Chat Analyzer.</p>
+            <div style="margin-top: 30px;">
+              <a href="http://zalo.me/0834422439" target="_blank" class="btn btn-outline">Liên hệ Tác giả</a>
+            </div>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+  
+  <script src="schedule-logic.js"></script>
+  <script src="dashboard.js"></script>
+</body>
+</html>

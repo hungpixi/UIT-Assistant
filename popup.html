@@ -1,89 +1,160 @@
 <!DOCTYPE html>
 <html lang="vi">
+
 <head>
-  <meta charset="UTF-8">
-  <title>UIT Assistant Setup</title>
-  <link rel="stylesheet" href="popup.css">
+   <meta charset="UTF-8">
+   <title>UIT Assistant - Premium</title>
+   <link rel="stylesheet" href="popup.css">
 </head>
+
 <body>
-  <div class="header">
-    <img src="icon128.png" alt="Logo" class="logo">
-    <h1>UIT ASSISTANT v1.9</h1>
-  </div>
+   <!-- Nền trang trí -->
+   <div class="glass-bg-shape shape-1"></div>
+   <div class="glass-bg-shape shape-2"></div>
 
-  <!-- Box trạng thái bot -->
-  <div class="status-box" id="statusBox">
-    <div class="status-indicator"></div>
-    <span id="statusText">Trạng thái: Đang load...</span>
-  </div>
-
-  <hr>
-
-  <!-- Setup Wizard -->
-  <div class="wizard">
-    <h3>⚙️ Setup Nhanh (3 Bước)</h3>
-    <p class="subtitle">Hoàn thành để Bot tự động làm việc</p>
-    
-    <div class="step" id="step1">
-      <div class="step-icon">1️⃣</div>
-      <div class="step-content">
-        <label>Đăng nhập Portal CITD</label>
-        <button id="btnLoginPortal" class="action-btn">Mở Cổng Sinh Viên</button>
+   <!-- Header -->
+   <header class="app-header">
+      <img src="icon128.png" alt="Logo" class="logo">
+      <div class="header-text">
+         <h1>UIT Assistant</h1>
+         <span>Smart Bot v2.0</span>
       </div>
-    </div>
+   </header>
 
-    <div class="step" id="step2">
-      <div class="step-icon">2️⃣</div>
-      <div class="step-content">
-        <label>Đồng Bộ Lịch Học</label>
-        <button id="btnSyncTKB" class="action-btn highlight">Quét Lịch Ngay</button>
+   <!-- Content Khu Vực -->
+   <main class="content-area">
+
+      <!-- TAB 1: HOME -->
+      <div id="tab-home" class="tab-pane active">
+         <!-- Trạng thái -->
+         <div class="status-card glass-panel">
+            <div class="status-indicator"></div>
+            <div class="status-info">
+               <span class="status-label">TRẠNG THÁI HỆ THỐNG</span>
+               <strong id="statusText">⏳ Đang tải...</strong>
+            </div>
+         </div>
+
+         <!-- Hero Action (Quan trọng nhất) -->
+         <div class="hero-action glass-panel border-glow">
+            <div class="hero-header">
+               <div class="hero-icon">🤖</div>
+               <div class="hero-text">
+                  <h3>Tự Động Vào Lớp</h3>
+                  <p>Bot sẽ tự nhảy vào lớp khi đến giờ</p>
+               </div>
+            </div>
+            <button id="btnAutoTeams" class="btn-primary glow-btn">Kích Hoạt Auto-Join</button>
+         </div>
+
+         <!-- Quick Actions -->
+         <h4 class="section-title">LỐI TẮT NHANH</h4>
+         <div class="grid-actions">
+            <button id="btnLoginPortal" class="action-btn">
+               <span class="btn-icon">🔗</span>
+               <span>Portal CĐ</span>
+            </button>
+            <button id="btnSyncTKB" class="action-btn">
+               <span class="btn-icon">🔄</span>
+               <span>Đồng Bộ TKB</span>
+            </button>
+            <button id="btnOpenTeams" class="action-btn">
+               <span class="btn-icon">💬</span>
+               <span>Mở Teams</span>
+            </button>
+            <button id="btnOpenDashboard" class="action-btn">
+               <span class="btn-icon">🖥️</span>
+               <span>Dashboard</span>
+            </button>
+         </div>
       </div>
-    </div>
 
-    <div class="step" id="step3">
-      <div class="step-icon">3️⃣</div>
-      <div class="step-content">
-        <label>Mở Tab MS Teams</label>
-        <button id="btnOpenTeams" class="action-btn">Mở MS Teams</button>
+      <!-- TAB 2: SCHEDULE -->
+      <div id="tab-schedule" class="tab-pane">
+         <h4 class="section-title">LỊCH HỌC TUẦN NÀY</h4>
+
+         <div id="active-link-container" class="live-class-card glass-panel" style="display: none;">
+            <div class="live-header">
+               <span class="live-badge">🔴 ĐANG DIỄN RA</span>
+            </div>
+            <b id="meeting-className" class="live-className">Môn học</b>
+            <button id="btnOpenMeeting" class="btn-success mt-2">🎥 Vào Lớp Ngay</button>
+         </div>
+
+         <div class="schedule-scroll-area">
+            <ul id="scheduleList" class="schedule-list">
+               <li class="empty-state">Chưa đồng bộ lịch học...</li>
+            </ul>
+         </div>
       </div>
-    </div>
 
-    <!-- V1.9 Auto Macro Step -->
-    <div class="step" id="step4">
-      <div class="step-icon">4️⃣</div>
-      <div class="step-content">
-        <label>Bật Cảnh Báo All Môn</label>
-        <button id="btnAutoTeams" class="action-btn highlight">Cài Auto-Notify</button>
+      <!-- TAB 3: SETTINGS -->
+      <div id="tab-settings" class="tab-pane">
+         <h4 class="section-title">TUỲ CHỈNH GIỜ GIẢNG VIÊN</h4>
+         <div class="glass-panel" style="padding: 12px; margin-bottom: 15px;">
+            <p class="settings-desc">Nếu GV thường xuyên vào trễ, hãy nhập số phút trễ (VD: <b>15</b>). Nếu vào sớm,
+               nhập số âm (VD: <b>-5</b>).</p>
+
+            <div class="offset-form mt-2">
+               <input type="text" id="teacherInput" placeholder="Tên GV (VD: Nguyen A)" autocomplete="off">
+               <input type="number" id="offsetInput" placeholder="Phút (±)">
+               <button id="btnSaveOffset" class="btn-primary">+</button>
+            </div>
+         </div>
+
+         <h4 class="section-title">DANH SÁCH ĐÃ LƯU</h4>
+         <div class="teacher-scroll-area">
+            <ul class="teacher-list" id="teacherList">
+               <!-- Injected JS -->
+            </ul>
+         </div>
       </div>
-    </div>
-  </div>
 
-  <hr>
+      <!-- TAB 4: NOTIFICATIONS -->
+      <div id="tab-notifications" class="tab-pane">
+         <h4 class="section-title">NHẬT KÝ BOT (24H QUA)</h4>
+         <div class="notification-scroll-area">
+            <ul class="notification-list" id="notificationList">
+               <li class="empty-state">Chưa có thông báo nào...</li>
+            </ul>
+         </div>
+      </div>
 
-  <!-- Box lịch học -->
-  <div class="card" id="schedule-box">
-    <h4><span class="icon">📚</span> Lịch Học Hôm Nay</h4>
-    <!-- V1.9: Nút Mở Nhanh Link (Video Icon) Nếu Đã Có Link -->
-    <div id="active-link-container" style="display: none; padding-bottom: 12px; border-bottom: 1px dashed #e0e0e0; margin-bottom: 10px;">
-       <button id="btnOpenMeeting" class="btn btn-success" style="width: 100%; font-size: 13px; font-weight: 600; padding: 10px; background-color: #28a745; display: flex; align-items: center; justify-content: center; gap: 8px;">
-          <span style="font-size: 16px;">🎥</span> <span>Vào Lớp: <b id="meeting-className"></b></span>
-       </button>
-       <div style="font-size: 10px; color: #666; text-align: center; margin-top: 4px;">Tham gia bằng Link MS Teams lúc nãy</div>
-    </div>
-    
-    <ul class="schedule-list" id="scheduleList">
-      <li class="empty-state">Đang tải lịch...</li>
-    </ul>
-  </div>
+   </main>
 
-  <div class="credit" style="text-align: center;">
-    ✨ Designed with ❤️ by <a href="http://zalo.me/0834422439" target="_blank" style="color: #0056b3; font-weight: bold; text-decoration: none;">Hungpixi</a>
-    <div style="font-size: 11px; color: #777; margin-top: 6px; font-weight: normal;">
-      ☕ Nếu tool xài ổn, em xin 5-10k kiếm cơm duy trì phát triển qua Momo: <b style="color: #a50064; user-select: all;">0834422439</b> nhé!
-    </div>
-  </div>
+   <!-- BOTTOM NAVIGATION -->
+   <nav class="bottom-nav">
+      <button class="nav-item active" data-tab="tab-home">
+         <svg fill="currentColor" viewBox="0 0 24 24">
+            <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z" />
+         </svg>
+         <span>Trang chủ</span>
+      </button>
+      <button class="nav-item" data-tab="tab-schedule">
+         <svg fill="currentColor" viewBox="0 0 24 24">
+            <path
+               d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11z" />
+         </svg>
+         <span>Lịch học</span>
+      </button>
+      <button class="nav-item" data-tab="tab-settings">
+         <svg fill="currentColor" viewBox="0 0 24 24">
+            <path
+               d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.06-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.06.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .43-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.49-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z" />
+         </svg>
+         <span>Cấu hình</span>
+      </button>
+      <button class="nav-item" data-tab="tab-notifications">
+         <svg fill="currentColor" viewBox="0 0 24 24">
+            <path
+               d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2zm-2 1H8v-6c0-2.48 1.51-4.5 4-4.5s4 2.02 4 4.5v6z" />
+         </svg>
+         <span>Nhật ký</span>
+      </button>
+   </nav>
 
-  <script src="schedule-logic.js"></script>
-  <script src="popup.js"></script>
+   <script src="schedule-logic.js"></script>
+   <script src="popup.js"></script>
 </body>
+
 </html>

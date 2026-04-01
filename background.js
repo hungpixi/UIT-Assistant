@@ -1,34 +1,40 @@
-// background.js — V1.6 Lifecycle Manager
+// background.js — V2.0 Lifecycle Manager (Fixed state persistence)
 // Trạng thái: IDLE | PRE_CLASS | WATCHING | CLASS_DETECTED
-// Bot chỉ tồn tại khi cần. Ngoài giờ học = 0 RAM consumption.
+// State lưu trong chrome.storage.session → không mất khi Service Worker bị Chrome kill
 
-let state = "IDLE";
+// ─────────────────────────────────────────────
+// STATE MANAGEMENT — Persistent across SW restarts (Fix Bug 1)
+// ─────────────────────────────────────────────
+async function getState() {
+  const { botState } = await chrome.storage.session.get("botState");
+  return botState || "IDLE";
+}
+
+async function setState(newState) {
+  await chrome.storage.session.set({ botState: newState });
+  console.log(`[UIT] State → ${newState}`);
+}
 
 // ─────────────────────────────────────────────
 // KHỞI CÀI ĐẶT khi Extension được nạp lần đầu
 // ─────────────────────────────────────────────
 chrome.runtime.onInstalled.addListener((details) => {
-  // Chỉ khởi tạo nếu là lần đầu cài đặt (install)
-  // Nếu là cập nhật (update) hoặc reload thì giữ nguyên dữ liệu cũ
   if (details.reason === "install") {
     chrome.storage.local.set({ schedule: [], zaloGroup: "", isActive: true });
     console.log("[UIT] Lần đầu cài đặt: Khởi tạo Storage.");
   }
-  
-  // Alarm nhẹ: check 1 lần / 5 phút. Chrome alarm KHÔNG tốn RAM.
+
   chrome.alarms.get("lifecycleCheck", (a) => {
     if (!a) chrome.alarms.create("lifecycleCheck", { periodInMinutes: 5 });
   });
-  // Update checker: 12 tiếng / 1 lần
   chrome.alarms.get("updateCheck", (a) => {
     if (!a) chrome.alarms.create("updateCheck", { periodInMinutes: 720 });
   });
-  console.log("[UIT v1.9] Extension ready. Alarms checked.");
-  
+  console.log("[UIT v2.0] Extension ready. Alarms checked.");
+
   checkForUpdates();
 });
 
-// Khi Chrome restart, alarm tự tạo lại nếu chưa có
 chrome.runtime.onStartup.addListener(() => {
   chrome.alarms.get("lifecycleCheck", (a) => {
     if (!a) chrome.alarms.create("lifecycleCheck", { periodInMinutes: 5 });
@@ -36,14 +42,14 @@ chrome.runtime.onStartup.addListener(() => {
   chrome.alarms.get("updateCheck", (a) => {
     if (!a) chrome.alarms.create("updateCheck", { periodInMinutes: 720 });
   });
-  
+
   checkForUpdates();
 });
 
 // ─────────────────────────────────────────────
 // HÀM CHÍNH: Kiểm tra giờ học có sắp tới không
 // ─────────────────────────────────────────────
-function getImminentClass(schedule) {
+function getImminentClass(schedule, teacherConfigs = {}) {
   const now = new Date();
   const dayMap = {
     "Chủ nhật": 0, "Thứ 2": 1, "Thứ 3": 2,
@@ -60,11 +66,17 @@ function getImminentClass(schedule) {
 
     const classStart = new Date();
     classStart.setHours(h, m, 0, 0);
-    const diff = (classStart - now) / 60000; // phút
 
-    // Trong vòng 30 phút trước và 90 phút sau khi lớp bắt đầu
+    let offsetMinutes = 0;
+    if (teacherConfigs && teacherConfigs[item.teacher]) {
+      offsetMinutes = parseInt(teacherConfigs[item.teacher].offset) || 0;
+    }
+    classStart.setMinutes(classStart.getMinutes() + offsetMinutes);
+
+    const diff = (classStart - now) / 60000;
+
     if (diff <= 30 && diff > -90) {
-      return item;
+      return { ...item, _appliedOffset: offsetMinutes };
     }
   }
   return null;
@@ -73,7 +85,7 @@ function getImminentClass(schedule) {
 // ─────────────────────────────────────────────
 // VÒNG ĐỜI: Chạy mỗi 5 phút hoặc Check Update
 // ─────────────────────────────────────────────
-chrome.alarms.onAlarm.addListener((alarm) => {
+chrome.alarms.onAlarm.addListener(async (alarm) => {
   if (alarm.name === "updateCheck") {
     checkForUpdates();
     return;
@@ -81,44 +93,70 @@ chrome.alarms.onAlarm.addListener((alarm) => {
 
   if (alarm.name !== "lifecycleCheck") return;
 
-  chrome.storage.local.get(["schedule", "isActive"], ({ schedule, isActive }) => {
-    if (!isActive || !schedule || schedule.length === 0) return;
+  const { schedule, isActive, teacherConfigs } = await chrome.storage.local.get(["schedule", "isActive", "teacherConfigs"]);
+  if (!isActive || !schedule || schedule.length === 0) return;
 
-    const imminentClass = getImminentClass(schedule);
+  const state = await getState();
+  const imminentClass = getImminentClass(schedule, teacherConfigs || {});
 
-    // Chưa tới giờ → giữ IDLE, không làm gì
-    if (!imminentClass && state === "IDLE") return;
+  if (!imminentClass && state === "IDLE") return;
 
-    // Hết giờ (đã qua 90 phút) → reset về IDLE
-    if (!imminentClass && state !== "IDLE") {
-      console.log("[UIT] Hết khung giờ. Reset về IDLE.");
-      sendSleepToTeams();
-      state = "IDLE";
+  if (!imminentClass && state !== "IDLE") {
+    console.log("[UIT] Hết khung giờ. Reset về IDLE.");
+    sendSleepToTeams();
+    await setState("IDLE");
+    return;
+  }
+
+  if (imminentClass && state === "IDLE") {
+    // Fix Bug 2: Bỏ qua nếu đã join lớp này trong vòng 90 phút qua
+    const { recentlyJoinedUntil } = await chrome.storage.session.get("recentlyJoinedUntil");
+    if (recentlyJoinedUntil && Date.now() < recentlyJoinedUntil) {
+      console.log("[UIT] Đã join lớp trong phiên này, bỏ qua re-trigger.");
       return;
     }
 
-    // Sắp tới giờ + đang IDLE → kích hoạt PRE_CLASS
-    if (imminentClass && state === "IDLE") {
-      state = "PRE_CLASS";
-      console.log(`[UIT] Sắp có lớp: ${imminentClass.name}. Chuyển PRE_CLASS → WATCHING.`);
+    await setState("PRE_CLASS");
+    const offsetText = imminentClass._appliedOffset
+      ? ` (Đã điều chỉnh ${imminentClass._appliedOffset > 0 ? '+' : ''}${imminentClass._appliedOffset}p)` : '';
+    console.log(`[UIT] Sắp có lớp: ${imminentClass.name}${offsetText}. Chuyển PRE_CLASS → WATCHING.`);
 
-      chrome.notifications.create({
-        type: "basic",
-        iconUrl: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==",
-        title: "⏰ Sắp có lớp học!",
-        message: `${imminentClass.name} — GV: ${imminentClass.teacher}. Bot đang bật cảm biến Teams.`
-      });
+    sendNotification(
+      "⏰ Sắp có lớp học!",
+      `${imminentClass.name} — GV: ${imminentClass.teacher}${offsetText}. Bot đang bật cảm biến Teams.`
+    );
 
-      wakeUpTeams(imminentClass);
-    }
-  });
+    wakeUpTeams(imminentClass);
+  }
 });
+
+// ─────────────────────────────────────────────
+// TRÌNH TẠO THÔNG BÁO (NOTIFICATION SYSTEM V2.0)
+// ─────────────────────────────────────────────
+function sendNotification(title, message, requireInteraction = false, type = "basic") {
+  const notifId = "uit_notif_" + Date.now();
+  chrome.notifications.create(notifId, {
+    type: type,
+    iconUrl: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==",
+    title: title,
+    message: message,
+    requireInteraction: requireInteraction
+  });
+
+  chrome.storage.local.get("notificationLogs", ({ notificationLogs }) => {
+    let logs = notificationLogs || [];
+    logs.unshift({ timestamp: Date.now(), title, message });
+    if (logs.length > 20) logs = logs.slice(0, 20);
+    chrome.storage.local.set({ notificationLogs: logs });
+  });
+
+  return notifId;
+}
 
 // ─────────────────────────────────────────────
 // ĐÁNH THỨC Teams
 // ─────────────────────────────────────────────
 function wakeUpTeams(classInfo) {
-  // Tự động cấp quyền Notifications, Cam, Mic cho Teams để khỏi hiện bảng hỏi
   const teamsPattern = "https://teams.cloud.microsoft/*";
   if (chrome.contentSettings) {
     chrome.contentSettings.notifications.set({ primaryPattern: teamsPattern, setting: "allow" });
@@ -133,32 +171,27 @@ function wakeUpTeams(classInfo) {
     }
 
     if (tabs && tabs.length > 0) {
-      // Đã có tab Teams → gửi lệnh WAKE_UP
       tabs.forEach(tab => {
         if (tab && tab.id) {
           chrome.tabs.sendMessage(tab.id, {
             type: "WAKE_UP",
             classInfo: classInfo
           }, () => {
-             if (chrome.runtime.lastError) { /* ignore closed tab error */ }
+            if (chrome.runtime.lastError) {}
           });
         }
       });
-      state = "WATCHING";
+      setState("WATCHING");
     } else {
-      // Chưa có tab Teams → mở mới
       chrome.tabs.create({ url: "https://teams.cloud.microsoft", active: false }, (tab) => {
         if (chrome.runtime.lastError || !tab || !tab.id) {
           console.error("[UIT] Failed to create Teams tab or no window available.");
           return;
         }
 
-        // Content script sẽ tự nhận WAKE_UP sau khi load xong vì state = WATCHING
-        state = "WATCHING";
-        // Sau 8 giây chờ Teams load, gửi wake up
+        setState("WATCHING");
         const targetTabId = tab.id;
         setTimeout(() => {
-          // Check lại xem tab còn sống không trước khi gửi
           chrome.tabs.get(targetTabId, (currentTab) => {
             if (!chrome.runtime.lastError && currentTab && currentTab.id) {
               chrome.tabs.sendMessage(currentTab.id, {
@@ -183,7 +216,7 @@ function sendSleepToTeams() {
       tabs.forEach(tab => {
         if (tab && tab.id) {
           chrome.tabs.sendMessage(tab.id, { type: "SLEEP_NOW" }, () => {
-            if (chrome.runtime.lastError) {} 
+            if (chrome.runtime.lastError) {}
           });
         }
       });
@@ -196,71 +229,67 @@ function sendSleepToTeams() {
 // ─────────────────────────────────────────────
 chrome.runtime.onMessage.addListener((req, sender, sendResponse) => {
 
-  // Content CITD báo đã sync TKB xong
   if (req.type === "SCHEDULE_SYNCED") {
-    chrome.notifications.create({
-      type: "basic",
-      iconUrl: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==",
-      title: "✅ Đồng bộ lịch thành công!",
-      message: `Đã lưu ${req.data.length} môn học. Bot sẽ tự bật trước mỗi giờ học.`
-    });
+    sendNotification(
+      "✅ Đồng bộ lịch thành công!",
+      `Đã lưu ${req.data.length} môn học. Bot sẽ tự bật trước mỗi giờ học.`
+    );
     sendResponse({ ok: true });
   }
 
-  // Content Teams báo tìm thấy link GV
   else if (req.type === "CLASS_DETECTED") {
-    if (state === "CLASS_DETECTED") return; // chống duplicate
-    state = "CLASS_DETECTED";
-    console.log("[UIT] CLASS_DETECTED! Teacher:", req.teacherName, "| Link:", req.link);
-
-    // 1. Notification
-    chrome.notifications.create({
-      type: "basic",
-      requireInteraction: true,
-      iconUrl: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==",
-      title: "🚨 GV vừa bật lớp!",
-      message: `${req.courseName} — ${req.teacherName}. Đang tham gia...`
-    });
-
-    // 2. Mở tab Join meeting (Teams sẽ tự detect tắt cam/mic qua URL params)
-    const joinUrl = buildJoinUrl(req.link);
-    // Lưu tạm thời link này vào Storage để Popup UI có thể móc ra hiện Icon Video
-    chrome.storage.local.set({ lastMeetingLink: joinUrl, lastMeetingClass: req.courseName, lastMeetingTime: Date.now() });
-
-    chrome.tabs.create({ url: joinUrl, active: true }, (tab) => {
-      if (chrome.runtime.lastError) {
-        console.warn("[UIT] Join tab creation failed:", chrome.runtime.lastError.message);
+    getState().then(async (currentState) => {
+      if (currentState === "CLASS_DETECTED") {
+        sendResponse({ ok: true });
+        return;
       }
-    });
+      await setState("CLASS_DETECTED");
+      console.log("[UIT] CLASS_DETECTED! Teacher:", req.teacherName, "| Link:", req.link);
 
-    // 3. Tắt Observer → IDLE
-    if (sender && sender.tab && sender.tab.id) {
-      chrome.tabs.sendMessage(sender.tab.id, { type: "SLEEP_NOW" }, () => {
-        if (chrome.runtime.lastError) {} 
+      sendNotification(
+        "🚨 GV vừa bật lớp!",
+        `${req.courseName} — ${req.teacherName}. Đang tham gia...`,
+        true
+      );
+
+      const joinUrl = buildJoinUrl(req.link);
+      chrome.storage.local.set({ lastMeetingLink: joinUrl, lastMeetingClass: req.courseName, lastMeetingTime: Date.now() });
+
+      chrome.tabs.create({ url: joinUrl, active: true }, (tab) => {
+        if (chrome.runtime.lastError) {
+          console.warn("[UIT] Join tab creation failed:", chrome.runtime.lastError.message);
+        }
       });
-    }
-    sendSleepToTeams();
-    state = "IDLE";
-    sendResponse({ ok: true });
+
+      if (sender && sender.tab && sender.tab.id) {
+        chrome.tabs.sendMessage(sender.tab.id, { type: "SLEEP_NOW" }, () => {
+          if (chrome.runtime.lastError) {}
+        });
+      }
+      sendSleepToTeams();
+
+      // Fix Bug 2: Chặn re-trigger trong 90 phút tiếp theo
+      await chrome.storage.session.set({ recentlyJoinedUntil: Date.now() + 90 * 60 * 1000 });
+      await setState("IDLE");
+      sendResponse({ ok: true });
+    });
+    return true; // async response
   }
 
-  // Popup hỏi trạng thái VÒNG ĐỜI
   else if (req.type === "GET_STATE") {
-    sendResponse({ state });
+    getState().then(state => sendResponse({ state }));
+    return true; // async response
   }
 
-  // Popup hỏi trạng thái ĐĂNG NHẬP (Smart Checklist V1.8)
   else if (req.type === "CHECK_LOGINS") {
     let citdLogin = false;
     let teamsLogin = false;
 
-    // Quét cookie của Portal
     chrome.cookies.getAll({ url: "https://student.citd.edu.vn" }, (citdCookies) => {
       if (citdCookies && citdCookies.length > 0) {
         citdLogin = true;
       }
-      
-      // Sang Quét Teams (Phải khớp chính xác host_permissions trong manifest)
+
       chrome.cookies.getAll({ url: "https://teams.cloud.microsoft" }, (teamCookies) => {
         if (teamCookies && teamCookies.length > 0) {
           teamsLogin = true;
@@ -268,9 +297,13 @@ chrome.runtime.onMessage.addListener((req, sender, sendResponse) => {
         sendResponse({ citdLogin, teamsLogin });
       });
     });
-    
-    // Yêu cầu trả Async cho Chrome Runtime
-    return true; 
+
+    return true;
+  }
+
+  else if (req.type === "SEND_NOTIFICATION") {
+    sendNotification(req.title, req.message, req.requireInteraction);
+    sendResponse({ ok: true });
   }
 
   return true;
@@ -278,18 +311,14 @@ chrome.runtime.onMessage.addListener((req, sender, sendResponse) => {
 
 // ─────────────────────────────────────────────
 // TẠO URL JOIN VỚI TẮT CAM + MIC MẶC ĐỊNH
-// Teams hỗ trợ tham số URL để preset device
 // ─────────────────────────────────────────────
 function buildJoinUrl(originalLink) {
-  // Giữ link gốc, thêm fragment để Teams biết preset (cam off, mic off)
-  // Cách chuẩn: Teams đọc ?preferredCamera=off&preferredMicrophone=off
   try {
     const url = new URL(originalLink);
     url.searchParams.set("preferredCamera", "off");
     url.searchParams.set("preferredMicrophone", "off");
     return url.toString();
   } catch {
-    // Nếu URL lỗi, trả về nguyên bản
     return originalLink;
   }
 }
@@ -305,10 +334,9 @@ async function checkForUpdates() {
     const localVersion = chrome.runtime.getManifest().version;
     const remoteVersion = remoteManifest.version;
 
-    // So sánh chuỗi semantic version đơn giản (vd: "1.9" < "2.0")
     if (remoteVersion && remoteVersion !== localVersion && remoteVersion.localeCompare(localVersion, undefined, { numeric: true, sensitivity: 'base' }) > 0) {
       console.log(`[UIT Auto-Update] Có bản mới: v${remoteVersion}. Máy đang chạy: v${localVersion}`);
-      
+
       chrome.notifications.create("update_notifier", {
         type: "basic",
         iconUrl: "icon128.png",
@@ -322,14 +350,11 @@ async function checkForUpdates() {
   }
 }
 
-// Bắt sự kiện người dùng Click vào Notification Update
 chrome.notifications.onClicked.addListener((notificationId) => {
   if (notificationId === "update_notifier") {
-    // Mở trang Repo GitHub để tải mới
     chrome.tabs.create({ url: "https://github.com/hungpixi/UIT-Assistant" }, (tab) => {
-       if (chrome.runtime.lastError) {}
+      if (chrome.runtime.lastError) {}
     });
-    // Xóa notif
     chrome.notifications.clear("update_notifier");
   }
 });

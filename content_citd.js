@@ -1,4 +1,4 @@
-// content_citd.js — V1.6 (Giữ nguyên logic, clean code)
+// content_citd.js — V2.0 (MutationObserver thay thế polling)
 // Chạy khi user mở student.citd.edu.vn/projects
 // Tự động quét bảng TKB và lưu vào chrome.storage
 
@@ -40,14 +40,18 @@ function scanSchedule() {
   return true;
 }
 
-// Retry với interval vì trang dùng Ajax/React (table load muộn)
-let retries = 0;
-const interval = setInterval(() => {
-  retries++;
-  if (retries > 15) { // Timeout sau 30 giây
-    clearInterval(interval);
-    console.warn("[UIT CITD] Timeout: Không tìm thấy bảng TKB.");
-    return;
-  }
-  if (scanSchedule()) clearInterval(interval);
-}, 2000);
+// Thử quét ngay nếu table đã có sẵn (trang load đồng bộ)
+if (!scanSchedule()) {
+  // Trang dùng Ajax/React → dùng MutationObserver thay vì setInterval polling
+  const observer = new MutationObserver(() => {
+    if (scanSchedule()) observer.disconnect();
+  });
+
+  observer.observe(document.body, { childList: true, subtree: true });
+
+  // Safety: ngắt observer sau 30 giây nếu không tìm thấy bảng
+  setTimeout(() => {
+    observer.disconnect();
+    console.warn("[UIT CITD] Timeout: Không tìm thấy bảng TKB sau 30 giây.");
+  }, 30000);
+}
