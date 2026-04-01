@@ -1,8 +1,8 @@
-# 🎓 UIT Student Assistant v1.9
+# 🎓 UIT Student Assistant v2.0
 
 > Extension tự động hóa dành riêng cho sinh viên hệ Đào tạo Từ xa (trạm CITD), thuộc **Khoa Khoa học và Kỹ thuật Thông tin**, chuyên ngành **Công nghệ Thông tin** tại Đại học Công nghệ Thông tin (UIT) - ĐHQG TP.HCM. Trợ thủ đắc lực giúp bạn làm chủ các buổi học trực tuyến qua MS Teams, nói không với việc đi muộn hay "miss" thông báo quan trọng.
 
-![Version](https://img.shields.io/badge/version-1.9-blue.svg)
+![Version](https://img.shields.io/badge/version-2.0-blue.svg)
 ![Platform](https://img.shields.io/badge/platform-Chrome%20Extension-success.svg)
 ![Author](https://img.shields.io/badge/author-Hungpixi-orange.svg)
 
@@ -18,18 +18,17 @@ Là một sinh viên chuyên ngành Công nghệ Thông tin theo học hệ từ
 **🎯 Giải pháp (The Solution):**
 Xuất phát từ nỗi đau trên, với tư duy của một dân IT *"Lười biếng để thúc đẩy năng suất"*, **UIT Assistant** ra đời nhằm giải phóng sức lao động thông qua tự động hóa:
 1. **Sức mạnh đồng bộ:** Một cú click quẹt toàn bộ lịch trên CITD về lưu trữ mà không cần gõ phím.
-2. **Kiến trúc Vòng đời thông minh (Smart Lifecycle):** Bot ngủ đông hoàn toàn khi không có lớp, **0% tốn RAM**. Nó chỉ "thức dậy" khi chẩn đoán sắp đến giờ học rồi lén mở dần cảm biến trên MS Teams.
+2. **Kiến trúc Vòng đời thông minh (Smart Lifecycle):** Bot ngủ đông hoàn toàn khi không có lớp, **0% tốn RAM**. Nó chỉ "thức dậy" khi chẩn đoán sắp đến giờ học rồi lén mở dần cảm biến trên MS Teams, trạng thái được duy trì xuyên suốt nhờ Session Storage.
 3. **Bot Auto-Notify:** Dùng bot mô phỏng hành vi để tự chui vào mười mấy môn học gạt công tắc nhận cảnh báo tự động thay cho người dùng.
 4. **Auto-Join Tàng hình:** Tốc độ tóm link ánh sáng! Ngay khi Giảng viên thả link, công cụ tiêm thẳng Params vào URL để khoá mõm Mic và dập Camera từ trong trứng nước trước khi nhảy mượt vào lớp, bảo vệ tuyệt đối hình ảnh sinh viên.
-## 🚀 Tính năng nổi bật
 
-- **Đồng Bộ TKB Tự Động**: Quét và lưu trữ Thời khóa biểu từ CITD Student Portal.
-- **Smart Lifecycle (Không ngốn RAM)**: Tự động ngủ đông (IDLE) và chỉ "thức dậy" (WATCHING) kiểm tra MS Teams khi đến gần giờ học.
-- **Auto-Join Tối Thượng**:
-  - Tự động bắt link học trong Channel Chung của mỗi môn học trên MS Teams.
-  - Tự động vượt Lobby/Pre-join screen: tự động Turn Off Mic & Camera để tránh quê xệ, rồi bấm Join vào lớp.
-- **Auto-Notification Bot (V1.9 New ✨)**: Auto Macro tự động dò tìm cấu hình tắt/bật thông báo kênh trên Teams. Kích hoạt chỉ với 1 Click từ Popup, Bot sẽ cài lại toàn bộ cấu hình hiển thị Biểu Ngữ (Banner) khi có link học tiết mới nhất.
-- **Floating UI Tools**: Truy cập siêu nhanh các tools cho sinh viên UIT từ màn hình Teams học.
+## 🚀 Tính năng nổi bật trong bản v2.0
+
+- **Premium Glass UI Mới:** Giao diện Quản lý (Dashboard) và Popup được thiết kế lại toàn bộ với hiệu ứng Glassmorphism hiện đại, hỗ trợ Dark Mode cho Dashboard và Light Mode cho Popup.
+- **Persistent State (Lưu Trạng Thái Độc Lập):** Service Worker giờ đây ghi nhớ vòng đời vào `chrome.storage.session`, không bao giờ bị "mất trí nhớ" nếu Chrome tự dọn dẹp RAM nền.
+- **Tùy Chỉnh Giờ Vào Lớp Theo Giảng Viên (Offset Configuration):** Bạn biết thầy giáo X luôn mở lớp trễ 10 phút hay cô Y vào sớm 5 phút? Dashboard mới cho phép bạn thiết lập khoảng thời gian chênh lệch (Offset) cho từng Giảng Viên cụ thể.
+- **Phân Tích Nộp Bài Tập (Attachment Detection):** Tính năng bám sát buổi học – nếu phát hiện nhiều file/hình ảnh gửi lên phòng chat liên tục trong vòng 1 phút, hệ thống sẽ hú thông báo: "Có thể thầy/cô vừa giao bài tập!" giúp bạn không bỏ lỡ điểm chuyên cần.
+- **Đồng Bộ TKB Không Cần Polling:** Tối ưu hiệu năng nạp dữ liệu từ trang CITD, sử dụng `MutationObserver` để tự động xử lý khi tải trang (Zero Delay).
 
 ## 📥 Cài đặt nhanh
 
@@ -52,10 +51,13 @@ gh repo clone hungpixi/UIT-Assistant
 
 ## 🖥 Hướng dẫn sử dụng
 
-1. **Bước 1**: Đăng nhập Portal CITD để kích hoạt session.
-2. **Bước 2**: Đồng bộ Lịch Học (nhấn "Quét Lịch Ngay").
-3. **Bước 3**: Mở Tab MS Teams trên trình duyệt. (Bot phải có tab Teams để chích Content Script vào).
-4. **Bước 4**: Bấm nút **Cài Auto-Notify** để tự động set cảnh báo khi Giảng viên nhắn báo vô lớp.
+1. **Bước 1**: Đăng nhập Portal CITD để kích hoạt bằng Cookie.
+2. **Bước 2**: Mở Extension lên (Giao diện Popup mới). Bấm "Quét Lịch Ngay" để đồng bộ Lịch Học.
+3. **Bước 3**: Nhấn vào **Bảng Điều Khiển Nâng Cao (Dashboard)** để vọc các tính năng:
+   - Theo dõi Lịch học Tuần này.
+   - Cài đặt nhắc trước/sau theo thói quen của từng Giảng viên.
+   - Xem Log lịch sử hành động của Bot.
+4. **Bước 4**: Mở Tab MS Teams trên trình duyệt (Bot phải có tab Teams để chích Content Script vào). Nếu chưa có, để khi gần đến giờ hệ thống sẽ tự mở!
 
 ## 🤝 Đóng góp (Contributing)
 Issues và Pull Requests luôn được chào đón. Nếu thấy tool hay, đừng quên cho repo một ⭐️ nhé!
