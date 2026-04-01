@@ -1,0 +1,4499 @@
+﻿commit 211a9965973020fe2cd8a2bd11fa9f9368888149
+Author: hungpixi <hungpixi@users.noreply.github.com>
+Date:   Wed Apr 1 11:35:08 2026 +0700
+
+    feat: upgrade extension to v2.0 with persistent state, notification system and premium glass UI
+
+diff --git a/CLAUDE.md b/CLAUDE.md
+new file mode 100644
+index 0000000..9420306
+--- /dev/null
++++ b/CLAUDE.md
+@@ -0,0 +1,60 @@
++# ≡ƒîƒ Global Rules ΓÇö UIT Assistant Project (v2.0)
++
++## ≡ƒÄ» 1. Nguy├¬n tß║»c cß╗æt l├╡i
++
++1. **Lazy but Smart:** ╞»u ti├¬n tß╗▒ ─æß╗Öng h├│a. Kh├┤ng l├ám tay nhß╗»ng g├¼ m├íy l├ám ─æ╞░ß╗úc.
++2. **Context l├á Vua:** ─Éß╗ìc kß╗╣ README/SKILL.md tr╞░ß╗¢c khi code t├¡nh n─âng mß╗¢i.
++3. **Chß║Ñt l╞░ß╗úng > Sß╗æ l╞░ß╗úng:** Refactor ngay khi ngß╗¡i thß║Ñy Code Smell. Tr├ính Technical Debt.
++
++---
++
++## ΓÜí 2. Tß╗æi ╞░u Token & Giß╗¢i hß║ín
++
++### Batching vs Splitting
++- **Gß╗Öp** c├íc bug/instruction nhß╗Å v├áo 1 prompt ΓåÆ giß║úm Input Token hao ph├¡ tß╗½ lß╗ïch sß╗¡ chat.
++- **T├ích** khi task cß║ºn chiß╗üu s├óu logic ΓåÆ tr├ính AI san phß║│ng Output, trß║ú lß╗¥i hß╗¥i hß╗út.
++- **Session mß╗¢i** cho c├┤ng viß╗çc ho├án to├án ─æß╗Öc lß║¡p vß╗¢i context c┼⌐.
++
++### T├ái liß╗çu & Indexing
++- Tß║¡n dß╗Ñng Project Caching cß╗ºa Claude ΓÇö cache t├ái liß╗çu cß╗æt l├╡i v├áo Workspace, ─æß╗ìc 1 lß║ºn.
++- Khi file qu├í lß╗¢n (xuß║Ñt hiß╗çn "Indexing"), AI d├╣ng Search/Grep ~800-1000 d├▓ng/lß║ºn.
++- Task cß║ºn **tuyß╗çt ─æß╗æi ch├¡nh x├íc**: y├¬u cß║ºu AI loop ─æß╗ìc to├án bß╗Ö file tß╗½ng ─æoß║ín, kh├┤ng ─æß╗ìc ngß║½u nhi├¬n.
++
++### Format
++- **Markdown l├á chuß║⌐n duy nhß║Ñt.** Kh├┤ng xuß║Ñt PDF/DOCX/Excel nß║┐u chß╗ë cß║ºn xem text.
++- Tr├ính nhß╗ôi PDF ß║únh v├áo AI ΓÇö OCR tß╗æn t├ái nguy├¬n v├á dß╗à hallucinate. Quy ─æß╗òi sang TXT/Markdown tr╞░ß╗¢c.
++
++### Model Routing
++| Model | D├╣ng khi |
++|-------|----------|
++| **Haiku / Flash / GPT-4o-mini** | Task vß║╖t: format, typo, fix syntax lß╗Ö liß╗àu |
++| **Sonnet / Pro** | Dev ch├¡nh: logic code, review PR, audit bß║úo mß║¡t, docs tß║ºm trung |
++| **Opus / Ultra / o1** | Mastermind: Master Plan, refactor core, ph├ón t├¡ch cß╗▒c phß╗⌐c tß║íp |
++
++---
++
++## ≡ƒº¬ 3. TDD / BDD
++
++- **Logic cß╗æt l├╡i** (Parser, Data Transform): Bß║»t buß╗Öc viß║┐t Unit Test tr╞░ß╗¢c (TDD).
++- **User Flow / UI**: N├¬n viß║┐t Integration Test (BDD) ─æß╗â check End-User Experience.
++- Test cß║ú Happy Path lß║½n Edge Cases (dß╗» liß╗çu rß╗ùng, nhß║¡p sai, timeout...).
++
++---
++
++## ≡ƒºá 4. Skills ΓÇö Auto-trigger khi nhß║¡n y├¬u cß║ºu tr├╣ng khß╗¢p
++
++- **API First:** ╞»u ti├¬n HTTP API thay v├¼ giß║ú lß║¡p chuß╗Öt (RPA).
++- **ADR:** Ghi r├╡ l├╜ do chß╗ìn Framework/DB/Library khi ra quyß║┐t ─æß╗ïnh kiß║┐n tr├║c.
++- **Bug-Fix Playbook:** Tra cß╗⌐u anti-patterns ngay khi fix lß╗ùi.
++- **GitHub CLI / Vercel CLI:** Thao t├íc branch/deploy qua CLI, kh├┤ng d├╣ng GUI.
++- **Effective Prompting:** Tß╗▒ cß║úi thiß╗çn chß║Ñt l╞░ß╗úng c├óu hß╗Åi nß╗Öi bß╗Ö, tr├ính ─æ├íp ├ín hß╗¥i hß╗út.
++
++---
++
++## ≡ƒôî Project-specific: UIT Assistant Chrome Extension
++
++- **Manifest Version:** MV3 ΓÇö Service Worker, kh├┤ng phß║úi background page.
++- **State persistence:** D├╣ng `chrome.storage.session` cho runtime state (kh├┤ng d├╣ng biß║┐n module-level trong SW).
++- **Content Scripts:** Teams (`content_teams.js` + `content_macro.js`), CITD (`content_citd.js`), Prejoin (`content_prejoin.js`).
++- **Test:** Jest + `schedule-logic.js` l├á entry point cho unit test (c├│ `module.exports`).
++- **Kh├┤ng d├╣ng `innerHTML` vß╗¢i dß╗» liß╗çu tß╗½ storage** ΓÇö d├╣ng `textContent` hoß║╖c DOM methods.
+diff --git a/background.js b/background.js
+index 9cd99e0..8980bfd 100644
+--- a/background.js
++++ b/background.js
+@@ -1,34 +1,40 @@
+-// background.js ΓÇö V1.6 Lifecycle Manager
++// background.js ΓÇö V2.0 Lifecycle Manager (Fixed state persistence)
+ // Trß║íng th├íi: IDLE | PRE_CLASS | WATCHING | CLASS_DETECTED
+-// Bot chß╗ë tß╗ôn tß║íi khi cß║ºn. Ngo├ái giß╗¥ hß╗ìc = 0 RAM consumption.
++// State l╞░u trong chrome.storage.session ΓåÆ kh├┤ng mß║Ñt khi Service Worker bß╗ï Chrome kill
+ 
+-let state = "IDLE";
++// ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
++// STATE MANAGEMENT ΓÇö Persistent across SW restarts (Fix Bug 1)
++// ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
++async function getState() {
++  const { botState } = await chrome.storage.session.get("botState");
++  return botState || "IDLE";
++}
++
++async function setState(newState) {
++  await chrome.storage.session.set({ botState: newState });
++  console.log(`[UIT] State ΓåÆ ${newState}`);
++}
+ 
+ // ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+ // KHß╗₧I C├ÇI ─Éß║╢T khi Extension ─æ╞░ß╗úc nß║íp lß║ºn ─æß║ºu
+ // ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+ chrome.runtime.onInstalled.addListener((details) => {
+-  // Chß╗ë khß╗ƒi tß║ío nß║┐u l├á lß║ºn ─æß║ºu c├ái ─æß║╖t (install)
+-  // Nß║┐u l├á cß║¡p nhß║¡t (update) hoß║╖c reload th├¼ giß╗» nguy├¬n dß╗» liß╗çu c┼⌐
+   if (details.reason === "install") {
+     chrome.storage.local.set({ schedule: [], zaloGroup: "", isActive: true });
+     console.log("[UIT] Lß║ºn ─æß║ºu c├ái ─æß║╖t: Khß╗ƒi tß║ío Storage.");
+   }
+-  
+-  // Alarm nhß║╣: check 1 lß║ºn / 5 ph├║t. Chrome alarm KH├öNG tß╗æn RAM.
++
+   chrome.alarms.get("lifecycleCheck", (a) => {
+     if (!a) chrome.alarms.create("lifecycleCheck", { periodInMinutes: 5 });
+   });
+-  // Update checker: 12 tiß║┐ng / 1 lß║ºn
+   chrome.alarms.get("updateCheck", (a) => {
+     if (!a) chrome.alarms.create("updateCheck", { periodInMinutes: 720 });
+   });
+-  console.log("[UIT v1.9] Extension ready. Alarms checked.");
+-  
++  console.log("[UIT v2.0] Extension ready. Alarms checked.");
++
+   checkForUpdates();
+ });
+ 
+-// Khi Chrome restart, alarm tß╗▒ tß║ío lß║íi nß║┐u ch╞░a c├│
+ chrome.runtime.onStartup.addListener(() => {
+   chrome.alarms.get("lifecycleCheck", (a) => {
+     if (!a) chrome.alarms.create("lifecycleCheck", { periodInMinutes: 5 });
+@@ -36,14 +42,14 @@ chrome.runtime.onStartup.addListener(() => {
+   chrome.alarms.get("updateCheck", (a) => {
+     if (!a) chrome.alarms.create("updateCheck", { periodInMinutes: 720 });
+   });
+-  
++
+   checkForUpdates();
+ });
+ 
+ // ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+ // H├ÇM CH├ìNH: Kiß╗âm tra giß╗¥ hß╗ìc c├│ sß║»p tß╗¢i kh├┤ng
+ // ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+-function getImminentClass(schedule) {
++function getImminentClass(schedule, teacherConfigs = {}) {
+   const now = new Date();
+   const dayMap = {
+     "Chß╗º nhß║¡t": 0, "Thß╗⌐ 2": 1, "Thß╗⌐ 3": 2,
+@@ -60,11 +66,17 @@ function getImminentClass(schedule) {
+ 
+     const classStart = new Date();
+     classStart.setHours(h, m, 0, 0);
+-    const diff = (classStart - now) / 60000; // ph├║t
+ 
+-    // Trong v├▓ng 30 ph├║t tr╞░ß╗¢c v├á 90 ph├║t sau khi lß╗¢p bß║»t ─æß║ºu
++    let offsetMinutes = 0;
++    if (teacherConfigs && teacherConfigs[item.teacher]) {
++      offsetMinutes = parseInt(teacherConfigs[item.teacher].offset) || 0;
++    }
++    classStart.setMinutes(classStart.getMinutes() + offsetMinutes);
++
++    const diff = (classStart - now) / 60000;
++
+     if (diff <= 30 && diff > -90) {
+-      return item;
++      return { ...item, _appliedOffset: offsetMinutes };
+     }
+   }
+   return null;
+@@ -73,7 +85,7 @@ function getImminentClass(schedule) {
+ // ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+ // V├ÆNG ─Éß╗£I: Chß║íy mß╗ùi 5 ph├║t hoß║╖c Check Update
+ // ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+-chrome.alarms.onAlarm.addListener((alarm) => {
++chrome.alarms.onAlarm.addListener(async (alarm) => {
+   if (alarm.name === "updateCheck") {
+     checkForUpdates();
+     return;
+@@ -81,44 +93,70 @@ chrome.alarms.onAlarm.addListener((alarm) => {
+ 
+   if (alarm.name !== "lifecycleCheck") return;
+ 
+-  chrome.storage.local.get(["schedule", "isActive"], ({ schedule, isActive }) => {
+-    if (!isActive || !schedule || schedule.length === 0) return;
++  const { schedule, isActive, teacherConfigs } = await chrome.storage.local.get(["schedule", "isActive", "teacherConfigs"]);
++  if (!isActive || !schedule || schedule.length === 0) return;
+ 
+-    const imminentClass = getImminentClass(schedule);
++  const state = await getState();
++  const imminentClass = getImminentClass(schedule, teacherConfigs || {});
+ 
+-    // Ch╞░a tß╗¢i giß╗¥ ΓåÆ giß╗» IDLE, kh├┤ng l├ám g├¼
+-    if (!imminentClass && state === "IDLE") return;
++  if (!imminentClass && state === "IDLE") return;
+ 
+-    // Hß║┐t giß╗¥ (─æ├ú qua 90 ph├║t) ΓåÆ reset vß╗ü IDLE
+-    if (!imminentClass && state !== "IDLE") {
+-      console.log("[UIT] Hß║┐t khung giß╗¥. Reset vß╗ü IDLE.");
+-      sendSleepToTeams();
+-      state = "IDLE";
++  if (!imminentClass && state !== "IDLE") {
++    console.log("[UIT] Hß║┐t khung giß╗¥. Reset vß╗ü IDLE.");
++    sendSleepToTeams();
++    await setState("IDLE");
++    return;
++  }
++
++  if (imminentClass && state === "IDLE") {
++    // Fix Bug 2: Bß╗Å qua nß║┐u ─æ├ú join lß╗¢p n├áy trong v├▓ng 90 ph├║t qua
++    const { recentlyJoinedUntil } = await chrome.storage.session.get("recentlyJoinedUntil");
++    if (recentlyJoinedUntil && Date.now() < recentlyJoinedUntil) {
++      console.log("[UIT] ─É├ú join lß╗¢p trong phi├¬n n├áy, bß╗Å qua re-trigger.");
+       return;
+     }
+ 
+-    // Sß║»p tß╗¢i giß╗¥ + ─æang IDLE ΓåÆ k├¡ch hoß║ít PRE_CLASS
+-    if (imminentClass && state === "IDLE") {
+-      state = "PRE_CLASS";
+-      console.log(`[UIT] Sß║»p c├│ lß╗¢p: ${imminentClass.name}. Chuyß╗ân PRE_CLASS ΓåÆ WATCHING.`);
++    await setState("PRE_CLASS");
++    const offsetText = imminentClass._appliedOffset
++      ? ` (─É├ú ─æiß╗üu chß╗ënh ${imminentClass._appliedOffset > 0 ? '+' : ''}${imminentClass._appliedOffset}p)` : '';
++    console.log(`[UIT] Sß║»p c├│ lß╗¢p: ${imminentClass.name}${offsetText}. Chuyß╗ân PRE_CLASS ΓåÆ WATCHING.`);
+ 
+-      chrome.notifications.create({
+-        type: "basic",
+-        iconUrl: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==",
+-        title: "ΓÅ░ Sß║»p c├│ lß╗¢p hß╗ìc!",
+-        message: `${imminentClass.name} ΓÇö GV: ${imminentClass.teacher}. Bot ─æang bß║¡t cß║úm biß║┐n Teams.`
+-      });
++    sendNotification(
++      "ΓÅ░ Sß║»p c├│ lß╗¢p hß╗ìc!",
++      `${imminentClass.name} ΓÇö GV: ${imminentClass.teacher}${offsetText}. Bot ─æang bß║¡t cß║úm biß║┐n Teams.`
++    );
+ 
+-      wakeUpTeams(imminentClass);
+-    }
+-  });
++    wakeUpTeams(imminentClass);
++  }
+ });
+ 
++// ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
++// TR├îNH Tß║áO TH├öNG B├üO (NOTIFICATION SYSTEM V2.0)
++// ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
++function sendNotification(title, message, requireInteraction = false, type = "basic") {
++  const notifId = "uit_notif_" + Date.now();
++  chrome.notifications.create(notifId, {
++    type: type,
++    iconUrl: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==",
++    title: title,
++    message: message,
++    requireInteraction: requireInteraction
++  });
++
++  chrome.storage.local.get("notificationLogs", ({ notificationLogs }) => {
++    let logs = notificationLogs || [];
++    logs.unshift({ timestamp: Date.now(), title, message });
++    if (logs.length > 20) logs = logs.slice(0, 20);
++    chrome.storage.local.set({ notificationLogs: logs });
++  });
++
++  return notifId;
++}
++
+ // ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+ // ─É├üNH THß╗¿C Teams
+ // ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+ function wakeUpTeams(classInfo) {
+-  // Tß╗▒ ─æß╗Öng cß║Ñp quyß╗ün Notifications, Cam, Mic cho Teams ─æß╗â khß╗Åi hiß╗çn bß║úng hß╗Åi
+   const teamsPattern = "https://teams.cloud.microsoft/*";
+   if (chrome.contentSettings) {
+     chrome.contentSettings.notifications.set({ primaryPattern: teamsPattern, setting: "allow" });
+@@ -133,32 +171,27 @@ function wakeUpTeams(classInfo) {
+     }
+ 
+     if (tabs && tabs.length > 0) {
+-      // ─É├ú c├│ tab Teams ΓåÆ gß╗¡i lß╗çnh WAKE_UP
+       tabs.forEach(tab => {
+         if (tab && tab.id) {
+           chrome.tabs.sendMessage(tab.id, {
+             type: "WAKE_UP",
+             classInfo: classInfo
+           }, () => {
+-             if (chrome.runtime.lastError) { /* ignore closed tab error */ }
++            if (chrome.runtime.lastError) {}
+           });
+         }
+       });
+-      state = "WATCHING";
++      setState("WATCHING");
+     } else {
+-      // Ch╞░a c├│ tab Teams ΓåÆ mß╗ƒ mß╗¢i
+       chrome.tabs.create({ url: "https://teams.cloud.microsoft", active: false }, (tab) => {
+         if (chrome.runtime.lastError || !tab || !tab.id) {
+           console.error("[UIT] Failed to create Teams tab or no window available.");
+           return;
+         }
+ 
+-        // Content script sß║╜ tß╗▒ nhß║¡n WAKE_UP sau khi load xong v├¼ state = WATCHING
+-        state = "WATCHING";
+-        // Sau 8 gi├óy chß╗¥ Teams load, gß╗¡i wake up
++        setState("WATCHING");
+         const targetTabId = tab.id;
+         setTimeout(() => {
+-          // Check lß║íi xem tab c├▓n sß╗æng kh├┤ng tr╞░ß╗¢c khi gß╗¡i
+           chrome.tabs.get(targetTabId, (currentTab) => {
+             if (!chrome.runtime.lastError && currentTab && currentTab.id) {
+               chrome.tabs.sendMessage(currentTab.id, {
+@@ -183,7 +216,7 @@ function sendSleepToTeams() {
+       tabs.forEach(tab => {
+         if (tab && tab.id) {
+           chrome.tabs.sendMessage(tab.id, { type: "SLEEP_NOW" }, () => {
+-            if (chrome.runtime.lastError) {} 
++            if (chrome.runtime.lastError) {}
+           });
+         }
+       });
+@@ -196,71 +229,67 @@ function sendSleepToTeams() {
+ // ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+ chrome.runtime.onMessage.addListener((req, sender, sendResponse) => {
+ 
+-  // Content CITD b├ío ─æ├ú sync TKB xong
+   if (req.type === "SCHEDULE_SYNCED") {
+-    chrome.notifications.create({
+-      type: "basic",
+-      iconUrl: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==",
+-      title: "Γ£à ─Éß╗ông bß╗Ö lß╗ïch th├ánh c├┤ng!",
+-      message: `─É├ú l╞░u ${req.data.length} m├┤n hß╗ìc. Bot sß║╜ tß╗▒ bß║¡t tr╞░ß╗¢c mß╗ùi giß╗¥ hß╗ìc.`
+-    });
++    sendNotification(
++      "Γ£à ─Éß╗ông bß╗Ö lß╗ïch th├ánh c├┤ng!",
++      `─É├ú l╞░u ${req.data.length} m├┤n hß╗ìc. Bot sß║╜ tß╗▒ bß║¡t tr╞░ß╗¢c mß╗ùi giß╗¥ hß╗ìc.`
++    );
+     sendResponse({ ok: true });
+   }
+ 
+-  // Content Teams b├ío t├¼m thß║Ñy link GV
+   else if (req.type === "CLASS_DETECTED") {
+-    if (state === "CLASS_DETECTED") return; // chß╗æng duplicate
+-    state = "CLASS_DETECTED";
+-    console.log("[UIT] CLASS_DETECTED! Teacher:", req.teacherName, "| Link:", req.link);
+-
+-    // 1. Notification
+-    chrome.notifications.create({
+-      type: "basic",
+-      requireInteraction: true,
+-      iconUrl: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==",
+-      title: "≡ƒÜ¿ GV vß╗½a bß║¡t lß╗¢p!",
+-      message: `${req.courseName} ΓÇö ${req.teacherName}. ─Éang tham gia...`
+-    });
++    getState().then(async (currentState) => {
++      if (currentState === "CLASS_DETECTED") {
++        sendResponse({ ok: true });
++        return;
++      }
++      await setState("CLASS_DETECTED");
++      console.log("[UIT] CLASS_DETECTED! Teacher:", req.teacherName, "| Link:", req.link);
+ 
+-    // 2. Mß╗ƒ tab Join meeting (Teams sß║╜ tß╗▒ detect tß║»t cam/mic qua URL params)
+-    const joinUrl = buildJoinUrl(req.link);
+-    // L╞░u tß║ím thß╗¥i link n├áy v├áo Storage ─æß╗â Popup UI c├│ thß╗â m├│c ra hiß╗çn Icon Video
+-    chrome.storage.local.set({ lastMeetingLink: joinUrl, lastMeetingClass: req.courseName, lastMeetingTime: Date.now() });
++      sendNotification(
++        "≡ƒÜ¿ GV vß╗½a bß║¡t lß╗¢p!",
++        `${req.courseName} ΓÇö ${req.teacherName}. ─Éang tham gia...`,
++        true
++      );
+ 
+-    chrome.tabs.create({ url: joinUrl, active: true }, (tab) => {
+-      if (chrome.runtime.lastError) {
+-        console.warn("[UIT] Join tab creation failed:", chrome.runtime.lastError.message);
+-      }
+-    });
++      const joinUrl = buildJoinUrl(req.link);
++      chrome.storage.local.set({ lastMeetingLink: joinUrl, lastMeetingClass: req.courseName, lastMeetingTime: Date.now() });
+ 
+-    // 3. Tß║»t Observer ΓåÆ IDLE
+-    if (sender && sender.tab && sender.tab.id) {
+-      chrome.tabs.sendMessage(sender.tab.id, { type: "SLEEP_NOW" }, () => {
+-        if (chrome.runtime.lastError) {} 
++      chrome.tabs.create({ url: joinUrl, active: true }, (tab) => {
++        if (chrome.runtime.lastError) {
++          console.warn("[UIT] Join tab creation failed:", chrome.runtime.lastError.message);
++        }
+       });
+-    }
+-    sendSleepToTeams();
+-    state = "IDLE";
+-    sendResponse({ ok: true });
++
++      if (sender && sender.tab && sender.tab.id) {
++        chrome.tabs.sendMessage(sender.tab.id, { type: "SLEEP_NOW" }, () => {
++          if (chrome.runtime.lastError) {}
++        });
++      }
++      sendSleepToTeams();
++
++      // Fix Bug 2: Chß║╖n re-trigger trong 90 ph├║t tiß║┐p theo
++      await chrome.storage.session.set({ recentlyJoinedUntil: Date.now() + 90 * 60 * 1000 });
++      await setState("IDLE");
++      sendResponse({ ok: true });
++    });
++    return true; // async response
+   }
+ 
+-  // Popup hß╗Åi trß║íng th├íi V├ÆNG ─Éß╗£I
+   else if (req.type === "GET_STATE") {
+-    sendResponse({ state });
++    getState().then(state => sendResponse({ state }));
++    return true; // async response
+   }
+ 
+-  // Popup hß╗Åi trß║íng th├íi ─É─éNG NHß║¼P (Smart Checklist V1.8)
+   else if (req.type === "CHECK_LOGINS") {
+     let citdLogin = false;
+     let teamsLogin = false;
+ 
+-    // Qu├⌐t cookie cß╗ºa Portal
+     chrome.cookies.getAll({ url: "https://student.citd.edu.vn" }, (citdCookies) => {
+       if (citdCookies && citdCookies.length > 0) {
+         citdLogin = true;
+       }
+-      
+-      // Sang Qu├⌐t Teams (Phß║úi khß╗¢p ch├¡nh x├íc host_permissions trong manifest)
++
+       chrome.cookies.getAll({ url: "https://teams.cloud.microsoft" }, (teamCookies) => {
+         if (teamCookies && teamCookies.length > 0) {
+           teamsLogin = true;
+@@ -268,9 +297,13 @@ chrome.runtime.onMessage.addListener((req, sender, sendResponse) => {
+         sendResponse({ citdLogin, teamsLogin });
+       });
+     });
+-    
+-    // Y├¬u cß║ºu trß║ú Async cho Chrome Runtime
+-    return true; 
++
++    return true;
++  }
++
++  else if (req.type === "SEND_NOTIFICATION") {
++    sendNotification(req.title, req.message, req.requireInteraction);
++    sendResponse({ ok: true });
+   }
+ 
+   return true;
+@@ -278,18 +311,14 @@ chrome.runtime.onMessage.addListener((req, sender, sendResponse) => {
+ 
+ // ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+ // Tß║áO URL JOIN Vß╗ÜI Tß║«T CAM + MIC Mß║╢C ─Éß╗èNH
+-// Teams hß╗ù trß╗ú tham sß╗æ URL ─æß╗â preset device
+ // ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+ function buildJoinUrl(originalLink) {
+-  // Giß╗» link gß╗æc, th├¬m fragment ─æß╗â Teams biß║┐t preset (cam off, mic off)
+-  // C├ích chuß║⌐n: Teams ─æß╗ìc ?preferredCamera=off&preferredMicrophone=off
+   try {
+     const url = new URL(originalLink);
+     url.searchParams.set("preferredCamera", "off");
+     url.searchParams.set("preferredMicrophone", "off");
+     return url.toString();
+   } catch {
+-    // Nß║┐u URL lß╗ùi, trß║ú vß╗ü nguy├¬n bß║ún
+     return originalLink;
+   }
+ }
+@@ -305,10 +334,9 @@ async function checkForUpdates() {
+     const localVersion = chrome.runtime.getManifest().version;
+     const remoteVersion = remoteManifest.version;
+ 
+-    // So s├ính chuß╗ùi semantic version ─æ╞ín giß║ún (vd: "1.9" < "2.0")
+     if (remoteVersion && remoteVersion !== localVersion && remoteVersion.localeCompare(localVersion, undefined, { numeric: true, sensitivity: 'base' }) > 0) {
+       console.log(`[UIT Auto-Update] C├│ bß║ún mß╗¢i: v${remoteVersion}. M├íy ─æang chß║íy: v${localVersion}`);
+-      
++
+       chrome.notifications.create("update_notifier", {
+         type: "basic",
+         iconUrl: "icon128.png",
+@@ -322,14 +350,11 @@ async function checkForUpdates() {
+   }
+ }
+ 
+-// Bß║»t sß╗▒ kiß╗çn ng╞░ß╗¥i d├╣ng Click v├áo Notification Update
+ chrome.notifications.onClicked.addListener((notificationId) => {
+   if (notificationId === "update_notifier") {
+-    // Mß╗ƒ trang Repo GitHub ─æß╗â tß║úi mß╗¢i
+     chrome.tabs.create({ url: "https://github.com/hungpixi/UIT-Assistant" }, (tab) => {
+-       if (chrome.runtime.lastError) {}
++      if (chrome.runtime.lastError) {}
+     });
+-    // X├│a notif
+     chrome.notifications.clear("update_notifier");
+   }
+ });
+diff --git a/content_citd.js b/content_citd.js
+index c1e41d1..d4b744d 100644
+--- a/content_citd.js
++++ b/content_citd.js
+@@ -1,4 +1,4 @@
+-// content_citd.js ΓÇö V1.6 (Giß╗» nguy├¬n logic, clean code)
++// content_citd.js ΓÇö V2.0 (MutationObserver thay thß║┐ polling)
+ // Chß║íy khi user mß╗ƒ student.citd.edu.vn/projects
+ // Tß╗▒ ─æß╗Öng qu├⌐t bß║úng TKB v├á l╞░u v├áo chrome.storage
+ 
+@@ -40,14 +40,18 @@ function scanSchedule() {
+   return true;
+ }
+ 
+-// Retry vß╗¢i interval v├¼ trang d├╣ng Ajax/React (table load muß╗Ön)
+-let retries = 0;
+-const interval = setInterval(() => {
+-  retries++;
+-  if (retries > 15) { // Timeout sau 30 gi├óy
+-    clearInterval(interval);
+-    console.warn("[UIT CITD] Timeout: Kh├┤ng t├¼m thß║Ñy bß║úng TKB.");
+-    return;
+-  }
+-  if (scanSchedule()) clearInterval(interval);
+-}, 2000);
++// Thß╗¡ qu├⌐t ngay nß║┐u table ─æ├ú c├│ sß║╡n (trang load ─æß╗ông bß╗Ö)
++if (!scanSchedule()) {
++  // Trang d├╣ng Ajax/React ΓåÆ d├╣ng MutationObserver thay v├¼ setInterval polling
++  const observer = new MutationObserver(() => {
++    if (scanSchedule()) observer.disconnect();
++  });
++
++  observer.observe(document.body, { childList: true, subtree: true });
++
++  // Safety: ngß║»t observer sau 30 gi├óy nß║┐u kh├┤ng t├¼m thß║Ñy bß║úng
++  setTimeout(() => {
++    observer.disconnect();
++    console.warn("[UIT CITD] Timeout: Kh├┤ng t├¼m thß║Ñy bß║úng TKB sau 30 gi├óy.");
++  }, 30000);
++}
+diff --git a/content_teams.js b/content_teams.js
+index 2657b1f..c56f7b8 100644
+--- a/content_teams.js
++++ b/content_teams.js
+@@ -7,6 +7,7 @@ console.log("[UIT Teams] Module loaded. Waiting for WAKE_UP signal...");
+ let observer = null;
+ let scheduleData = [];
+ let classInfo = null;
++let recentAttachments = []; // V2.0 Array for attachment tracking
+ 
+ // ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+ // NHß║¼N Lß╗åNH Tß╗¬ BACKGROUND
+@@ -227,12 +228,16 @@ function checkNode(node) {
+ 
+   const html = node.innerHTML;
+ 
++  // T├¼m t├¬n ng╞░ß╗¥i gß╗¡i (leo ng╞░ß╗úc DOM)
++  const senderName = getSenderName(node);
++
++  // V2.0: Theo d├╡i sß╗▒ kiß╗çn nß╗Öp b├ái tß║¡p (ß║únh/file)
++  detectAttachments(node, senderName);
++
+   // Kiß╗âm tra c├│ link meeting kh├┤ng
+   const hasMeetingLink = html.includes("meetup-join") || html.includes("Tham gia cuß╗Öc hß╗ìp");
+   if (!hasMeetingLink) return;
+ 
+-  // T├¼m t├¬n ng╞░ß╗¥i gß╗¡i (leo ng╞░ß╗úc DOM)
+-  const senderName = getSenderName(node);
+   console.log("[UIT Teams] Meeting link detected. Sender:", senderName);
+ 
+   // ─Éß╗æi chiß║┐u vß╗¢i danh s├ích GV trong TKB
+@@ -255,6 +260,47 @@ function checkNode(node) {
+   reportClassDetected(matched.name, senderName, meetingLink);
+ }
+ 
++// ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
++// PH├éN T├ìCH ─É├ìNH K├êM / B├ÇI Tß║¼P (V2.0)
++// ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
++function detectAttachments(node, senderName) {
++  // T├¼m c├íc thß║╗ img (th╞░ß╗¥ng l├á ß║únh ─æ╞░ß╗úc gß╗¡i l├¬n) 
++  // Loß║íi trß╗½ avatar profile picture
++  const imgs = Array.from(node.querySelectorAll('img')).filter(img => {
++    const src = img.src || "";
++    // Bß╗Å qua c├íc h├¼nh ß║únh cß╗ºa avatar, icon, emoji
++    return !src.includes("avatar") && !src.includes("profile") && !src.includes("emoji");
++  });
++
++  // T├¼m c├íc thß║╗ ─æ├¡nh k├¿m mang ├╜ ngh─⌐a l├á file Word/PDF/File n├⌐n
++  const files = node.querySelectorAll('[data-tid="message-attachment"], .ui-chat__message__attachment');
++
++  if (imgs.length > 0 || files.length > 0) {
++    const now = Date.now();
++    
++    // Th├¬m mß╗æc thß╗¥i gian v├áo mß║úng
++    recentAttachments.push(now);
++
++    // Xo├í c├íc mß╗æc thß╗¥i gian c┼⌐ h╞ín 60 gi├óy (1 ph├║t)
++    recentAttachments = recentAttachments.filter(time => now - time <= 60000);
++
++    // Nß║┐u c├│ 2 file ─æ├¡nh k├¿m trß╗ƒ l├¬n trong v├▓ng 1 ph├║t
++    if (recentAttachments.length >= 2) {
++      console.log("[UIT Teams] Ph├ít hiß╗çn nhiß╗üu file ─æ├¡nh k├¿m! Cß║únh b├ío nß╗Öp b├ái tß║¡p.");
++      
++      chrome.runtime.sendMessage({
++        type: "SEND_NOTIFICATION", 
++        title: "≡ƒÜ¿ B├ío ─æß╗Öng Nß╗Öp B├ái Tß║¡p!",
++        message: `Mß╗ìi ng╞░ß╗¥i ─æang gß╗¡i ß║únh/file li├¬n tß╗Ñc (C├│ thß╗â thß║ºy giao b├ái). V├áo check ngay!`,
++        requireInteraction: true
++      });
++
++      // Clear mß║úng ─æß╗â tr├ính spam li├¬n tß╗Ñc
++      recentAttachments = [];
++    }
++  }
++}
++
+ // ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+ // T├îM T├èN NG╞»ß╗£I Gß╗¼I (leo DOM ng╞░ß╗úc l├¬n)
+ // ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+diff --git a/dashboard.css b/dashboard.css
+new file mode 100644
+index 0000000..e0ff401
+--- /dev/null
++++ b/dashboard.css
+@@ -0,0 +1,377 @@
++:root {
++  --primary: #5c6bc0;
++  --primary-hover: #3f51b5;
++  --bg-dark: #121212;
++  --bg-panel: #1e1e24;
++  --text-main: #f0f0f0;
++  --text-muted: #a0a0a0;
++  --accent: #ff4081;
++  --border: rgba(255, 255, 255, 0.1);
++  --glass-bg: rgba(30, 30, 36, 0.65);
++  --glass-border: rgba(255, 255, 255, 0.08);
++}
++
++* {
++  box-sizing: border-box;
++  margin: 0;
++  padding: 0;
++}
++
++body {
++  font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
++  background-color: var(--bg-dark);
++  color: var(--text-main);
++  height: 100vh;
++  overflow: hidden;
++  background: radial-gradient(circle at top left, #1a1a2e, #121212);
++}
++
++.dashboard-container {
++  display: flex;
++  height: 100vh;
++}
++
++/* Sidebar */
++.sidebar {
++  width: 250px;
++  background: var(--glass-bg);
++  backdrop-filter: blur(12px);
++  -webkit-backdrop-filter: blur(12px);
++  border-right: 1px solid var(--glass-border);
++  display: flex;
++  flex-direction: column;
++}
++
++.logo-container {
++  padding: 30px 20px;
++  text-align: center;
++  border-bottom: 1px solid var(--glass-border);
++}
++
++.logo {
++  width: 64px;
++  height: 64px;
++  margin-bottom: 15px;
++  border-radius: 12px;
++  box-shadow: 0 4px 15px rgba(0,0,0,0.5);
++}
++
++.logo-container h2 {
++  font-size: 1.2rem;
++  margin-bottom: 5px;
++  background: linear-gradient(90deg, #9fa8da, #ffffff);
++  -webkit-background-clip: text;
++  background-clip: text;
++  -webkit-text-fill-color: transparent;
++}
++
++.version {
++  font-size: 0.8rem;
++  color: var(--accent);
++  background: rgba(255, 64, 129, 0.1);
++  padding: 2px 8px;
++  border-radius: 10px;
++}
++
++.nav-menu {
++  padding: 20px 0;
++  flex: 1;
++}
++
++.nav-item {
++  display: block;
++  padding: 15px 25px;
++  color: var(--text-muted);
++  text-decoration: none;
++  font-weight: 500;
++  transition: all 0.3s ease;
++  border-left: 3px solid transparent;
++}
++
++.nav-item:hover, .nav-item.active {
++  background: rgba(92, 107, 192, 0.1);
++  color: var(--text-main);
++  border-left: 3px solid var(--primary);
++}
++
++/* Main Content */
++.main-content {
++  flex: 1;
++  display: flex;
++  flex-direction: column;
++  overflow: hidden;
++}
++
++.top-bar {
++  padding: 20px 30px;
++  background: var(--glass-bg);
++  backdrop-filter: blur(10px);
++  border-bottom: 1px solid var(--glass-border);
++  display: flex;
++  justify-content: space-between;
++  align-items: center;
++}
++
++.top-bar h1 {
++  font-size: 1.5rem;
++  font-weight: 600;
++}
++
++.status-badge {
++  padding: 6px 12px;
++  border-radius: 20px;
++  font-size: 0.85rem;
++  font-weight: bold;
++  background: #333;
++}
++
++.status-badge.active {
++  background: rgba(40, 167, 69, 0.2);
++  color: #2ecc71;
++  border: 1px solid rgba(40, 167, 69, 0.5);
++}
++
++.content-area {
++  padding: 30px;
++  overflow-y: auto;
++  flex: 1;
++}
++
++.tab-pane {
++  display: none;
++  animation: fadeIn 0.4s ease;
++}
++
++.tab-pane.active {
++  display: block;
++}
++
++@keyframes fadeIn {
++  from { opacity: 0; transform: translateY(10px); }
++  to { opacity: 1; transform: translateY(0); }
++}
++
++h3 {
++  margin-bottom: 25px;
++  color: #fff;
++  font-weight: 600;
++  letter-spacing: 0.5px;
++}
++
++/* Utility Classes */
++.text-muted { color: var(--text-muted); }
++.text-center { text-align: center; }
++.mb-4 { margin-bottom: 1.5rem; }
++
++/* Components */
++.glass-card {
++  background: var(--glass-bg);
++  border: 1px solid var(--glass-border);
++  border-radius: 12px;
++  padding: 25px;
++  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
++}
++
++.glass-card h4 {
++  margin-bottom: 15px;
++  color: #e0e0e0;
++}
++
++.btn {
++  padding: 10px 20px;
++  border: none;
++  border-radius: 8px;
++  font-weight: 600;
++  cursor: pointer;
++  transition: all 0.2s;
++  font-family: inherit;
++}
++
++.btn-primary {
++  background: var(--primary);
++  color: white;
++}
++.btn-primary:hover { background: var(--primary-hover); transform: translateY(-2px); box-shadow: 0 4px 12px rgba(92, 107, 192, 0.4); }
++
++.btn-accent {
++  background: var(--accent);
++  color: white;
++}
++.btn-accent:hover { opacity: 0.9; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(255, 64, 129, 0.4); }
++
++.btn-outline {
++  background: transparent;
++  color: var(--primary);
++  border: 1px solid var(--primary);
++}
++.btn-outline:hover { background: rgba(92, 107, 192, 0.1); }
++
++/* Forms */
++.form-group {
++  margin-bottom: 15px;
++}
++.row {
++  display: flex;
++  gap: 15px;
++}
++.flex-1 { flex: 1; }
++.flex-2 { flex: 2; }
++
++.form-control {
++  width: 100%;
++  padding: 12px 15px;
++  background: rgba(0, 0, 0, 0.2);
++  border: 1px solid var(--border);
++  border-radius: 8px;
++  color: white;
++  font-family: inherit;
++  font-size: 14px;
++}
++
++.form-control:focus {
++  outline: none;
++  border-color: var(--primary);
++  box-shadow: 0 0 0 2px rgba(92, 107, 192, 0.25);
++}
++
++/* Specific Layouts */
++.header-with-actions {
++  display: flex;
++  justify-content: space-between;
++  align-items: center;
++  margin-bottom: 15px;
++}
++
++.header-with-actions h3 {
++  margin-bottom: 0;
++}
++
++/* Teacher Config List */
++.teacher-item {
++  display: flex;
++  align-items: center;
++  justify-content: space-between;
++  padding: 15px 20px;
++  background: rgba(255, 255, 255, 0.03);
++  border: 1px solid var(--border);
++  margin-bottom: 10px;
++  border-radius: 8px;
++  transition: background 0.2s;
++}
++
++.teacher-item:hover {
++  background: rgba(255, 255, 255, 0.06);
++}
++
++.teacher-info strong {
++  display: block;
++  font-size: 1.1rem;
++  margin-bottom: 4px;
++}
++
++.teacher-controls {
++  display: flex;
++  align-items: center;
++  gap: 10px;
++}
++
++.offset-input {
++  width: 80px;
++  text-align: center;
++}
++
++/* Log system */
++.log-container {
++  max-height: 400px;
++  overflow-y: auto;
++  padding-right: 10px;
++}
++
++.log-item {
++  padding: 12px 15px;
++  border-bottom: 1px solid var(--glass-border);
++  display: flex;
++  flex-direction: column;
++  gap: 5px;
++}
++
++.log-item:last-child {
++  border-bottom: none;
++}
++
++.log-time {
++  font-size: 0.8rem;
++  color: var(--accent);
++}
++
++.log-title {
++  font-weight: bold;
++}
++
++.log-msg {
++  color: var(--text-muted);
++  font-size: 0.9rem;
++}
++/* Schedule List (shared with schedule-logic.js render) */
++.schedule-list {
++  list-style: none;
++  padding: 0;
++  margin: 0;
++}
++.schedule-list li.day-header {
++  background: rgba(92, 107, 192, 0.15);
++  color: #9fa8da;
++  padding: 8px 14px;
++  border-radius: 6px;
++  margin: 12px 0 6px 0;
++  font-size: 12px;
++  font-weight: 700;
++  text-transform: uppercase;
++  letter-spacing: 0.5px;
++}
++.schedule-list li.day-today {
++  background: rgba(40, 167, 69, 0.2);
++  color: #69db7c;
++  border-left: 3px solid #40c057;
++}
++.schedule-list li.class-item {
++  background: rgba(255, 255, 255, 0.04);
++  border: 1px solid var(--border);
++  border-left: 4px solid var(--primary);
++  margin-bottom: 8px;
++  padding: 12px 15px;
++  border-radius: 8px;
++  font-size: 14px;
++  color: var(--text-main);
++  transition: background 0.2s;
++}
++.schedule-list li.class-item:hover {
++  background: rgba(255, 255, 255, 0.07);
++}
++.schedule-list li.class-today {
++  border-left-color: #40c057;
++  background: rgba(40, 167, 69, 0.08);
++}
++.schedule-list .time-badge {
++  display: inline-block;
++  background: rgba(92, 107, 192, 0.3);
++  color: #c5cae9;
++  padding: 3px 8px;
++  border-radius: 4px;
++  font-weight: 700;
++  font-size: 12px;
++  margin-right: 8px;
++}
++.schedule-list .empty-state {
++  text-align: center;
++  color: var(--text-muted);
++  font-size: 14px;
++  padding: 30px;
++  font-style: italic;
++}
++
++/* Scrollbar */
++::-webkit-scrollbar { width: 8px; }
++::-webkit-scrollbar-track { background: transparent; }
++::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
++::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.3); }
+diff --git a/dashboard.html b/dashboard.html
+new file mode 100644
+index 0000000..01e7920
+--- /dev/null
++++ b/dashboard.html
+@@ -0,0 +1,96 @@
++<!DOCTYPE html>
++<html lang="vi">
++<head>
++  <meta charset="UTF-8">
++  <title>UIT Assistant - Settings Dashboard</title>
++  <link rel="stylesheet" href="dashboard.css">
++</head>
++<body>
++  <div class="dashboard-container">
++    <aside class="sidebar">
++      <div class="logo-container">
++        <img src="icon128.png" alt="Logo" class="logo">
++        <h2>UIT Assistant</h2>
++        <span class="version">v2.0</span>
++      </div>
++      <nav class="nav-menu">
++        <a href="#tab-schedule" class="nav-item active" data-tab="tab-schedule">≡ƒùô∩╕Å Lß╗ïch Hß╗ìc</a>
++        <a href="#tab-teachers" class="nav-item" data-tab="tab-teachers">≡ƒæ¿ΓÇì≡ƒÅ½ Cß║Ñu H├¼nh Giß║úng Vi├¬n</a>
++        <a href="#tab-notifications" class="nav-item" data-tab="tab-notifications">≡ƒöö Th├┤ng B├ío & Log</a>
++        <a href="#tab-about" class="nav-item" data-tab="tab-about">Γä╣∩╕Å Th├┤ng Tin</a>
++      </nav>
++    </aside>
++
++    <main class="main-content">
++      <header class="top-bar">
++        <h1>Dashboard C├ái ─Éß║╖t CHUY├èN S├éU</h1>
++        <div class="status-badge" id="botStatus">─Éang kiß╗âm tra...</div>
++      </header>
++
++      <div class="content-area">
++        <!-- TAB: SCHEDULE -->
++        <section id="tab-schedule" class="tab-pane active">
++          <h3>Tß╗òng Quan Lß╗ïch Hß╗ìc Trong Tuß║ºn</h3>
++          <div class="schedule-grid" id="scheduleGrid">
++            <!-- Schedule items will be injected here -->
++            <p class="text-muted">─Éang tß║úi dß╗» liß╗çu...</p>
++          </div>
++        </section>
++
++        <!-- TAB: TEACHERS CONFIG -->
++        <section id="tab-teachers" class="tab-pane">
++          <div class="header-with-actions">
++            <h3>T├╣y Chß╗ënh Giß╗¥ Hß╗ìc Theo Giß║úng Vi├¬n</h3>
++            <button id="btnSaveConfigs" class="btn btn-primary">≡ƒÆ╛ L╞░u Cß║Ñu H├¼nh</button>
++          </div>
++          <p class="text-muted" style="margin-bottom: 20px;">
++            Mß╗ùi gi├ío vi├¬n c├│ th├│i quen l├¬n lß╗¢p kh├íc nhau. Bß║ín c├│ thß╗â thiß║┐t lß║¡p thß╗¥i gian bß║»t ─æß║ºu trß╗à (VD: +15 ph├║t) hoß║╖c sß╗¢m (VD: -5 ph├║t) ─æß╗â Bot hoß║ít ─æß╗Öng ch├¡nh x├íc h╞ín.
++          </p>
++          
++          <div class="teacher-list" id="teacherConfigList">
++            <!-- Teacher configs will be injected here -->
++          </div>
++        </section>
++
++        <!-- TAB: NOTIFICATIONS & LOGS -->
++        <section id="tab-notifications" class="tab-pane">
++          <h3>Tr├¼nh Quß║ún L├╜ Th├┤ng B├ío & Lß╗ïch Sß╗¡ Hoß║ít ─Éß╗Öng</h3>
++          
++          <div class="glass-card mb-4">
++            <h4>Tß║ío Th├┤ng B├ío Thß╗¡ Nghiß╗çm</h4>
++            <div class="form-group row">
++              <input type="text" id="notifTitle" placeholder="Ti├¬u ─æß╗ü th├┤ng b├ío" class="form-control flex-1">
++              <input type="text" id="notifMessage" placeholder="Nß╗Öi dung nhß║»c nhß╗ƒ..." class="form-control flex-2">
++              <button id="btnTestNotif" class="btn btn-accent">Thß╗¡ Nghiß╗çm</button>
++            </div>
++          </div>
++
++          <div class="glass-card">
++            <h4>Lß╗ïch Sß╗¡ Bot Hoß║ít ─Éß╗Öng (Logs)</h4>
++            <div class="log-container" id="logList">
++              <!-- Logs injected here -->
++              <p class="text-muted">Ch╞░a c├│ hoß║ít ─æß╗Öng n├áo ─æ╞░ß╗úc ghi nhß║¡n.</p>
++            </div>
++          </div>
++        </section>
++
++        <!-- TAB: ABOUT -->
++        <section id="tab-about" class="tab-pane">
++          <div class="glass-card text-center" style="padding: 40px;">
++            <img src="icon128.png" style="width: 100px; margin-bottom: 20px;">
++            <h2>UIT Student Assistant - Advanced Update</h2>
++            <p>Trß╗ú l├╜ tß╗▒ ─æß╗Öng h├│a qu├í tr├¼nh hß╗ìc tß║¡p Microsoft Teams cho Sinh vi├¬n UIT.</p>
++            <p>Version 2.0 - T├¡ch hß╗úp Notifications tuß╗│ chß╗ënh v├á AI Chat Analyzer.</p>
++            <div style="margin-top: 30px;">
++              <a href="http://zalo.me/0834422439" target="_blank" class="btn btn-outline">Li├¬n hß╗ç T├íc giß║ú</a>
++            </div>
++          </div>
++        </section>
++      </div>
++    </main>
++  </div>
++  
++  <script src="schedule-logic.js"></script>
++  <script src="dashboard.js"></script>
++</body>
++</html>
+diff --git a/dashboard.js b/dashboard.js
+new file mode 100644
+index 0000000..3d46059
+--- /dev/null
++++ b/dashboard.js
+@@ -0,0 +1,201 @@
++document.addEventListener('DOMContentLoaded', () => {
++  // Navigation Tabs Logic
++  const navItems = document.querySelectorAll('.nav-item');
++  const tabPanes = document.querySelectorAll('.tab-pane');
++
++  navItems.forEach(item => {
++    item.addEventListener('click', (e) => {
++      e.preventDefault();
++      // Remove active from all
++      navItems.forEach(n => n.classList.remove('active'));
++      tabPanes.forEach(t => t.classList.remove('active'));
++      
++      // Add active to current
++      item.classList.add('active');
++      const targetId = item.getAttribute('data-tab');
++      document.getElementById(targetId).classList.add('active');
++    });
++  });
++
++  // Verify background status
++  chrome.runtime.sendMessage({ type: "GET_STATE" }, (res) => {
++    const badge = document.getElementById('botStatus');
++    if (chrome.runtime.lastError || !res) {
++      badge.textContent = "Kh├┤ng thß╗â kß║┐t nß╗æi";
++      badge.classList.remove('active');
++    } else {
++      badge.textContent = `V├ÆNG ─Éß╗£I: ${res.state}`;
++      if (res.state !== "IDLE") badge.classList.add('active');
++    }
++  });
++
++  // Load Data
++  loadSchedule();
++  loadTeacherConfigs();
++  loadNotificationLogs();
++
++  // Test Notification Button
++  document.getElementById('btnTestNotif').addEventListener('click', () => {
++    const title = document.getElementById('notifTitle').value || "B├ío thß╗⌐c test";
++    const msg = document.getElementById('notifMessage').value || "─É├óy l├á nß╗Öi dung thß╗¡ nghiß╗çm.";
++    chrome.runtime.sendMessage({
++      type: "SEND_NOTIFICATION",
++      title: title,
++      message: msg,
++      requireInteraction: false
++    }, () => {
++      setTimeout(loadNotificationLogs, 500); // Reload logs after a short delay
++    });
++  });
++
++  // Save Teacher Configs Button
++  document.getElementById('btnSaveConfigs').addEventListener('click', saveTeacherConfigs);
++});
++
++// ----------------------------------------------------
++// TAB 1: SCHEDULE OVERVIEW
++// ----------------------------------------------------
++function loadSchedule() {
++  chrome.storage.local.get("schedule", ({ schedule }) => {
++    const grid = document.getElementById('scheduleGrid');
++    if (!schedule || schedule.length === 0) {
++      grid.innerHTML = '<p class="text-muted">Ch╞░a c├│ dß╗» liß╗çu. Vui l├▓ng quay lß║íi Extension Popup ─æß╗â ─æß╗ông bß╗Ö TKB.</p>';
++      return;
++    }
++
++    const ul = document.createElement('ul');
++    ul.className = 'schedule-list';
++    
++    // Sß╗¡ dß╗Ñng h├ám render c├│ sß║╡n trong schedule-logic.js (nß║┐u ─æ╞░ß╗úc nh├║ng)
++    if (typeof renderScheduleList === 'function') {
++      renderScheduleList(schedule, ul, null);
++    } else {
++      // Fallback
++      schedule.forEach(item => {
++        const li = document.createElement('li');
++        li.textContent = `${item.day} - ${item.time}: ${item.name} (GV: ${item.teacher})`;
++        li.style.marginBottom = '10px';
++        ul.appendChild(li);
++      });
++    }
++    
++    grid.innerHTML = '';
++    grid.appendChild(ul);
++  });
++}
++
++// ----------------------------------------------------
++// TAB 2: TEACHERS CONFIG
++// ----------------------------------------------------
++let currentTeachers = [];
++
++function loadTeacherConfigs() {
++  chrome.storage.local.get(["schedule", "teacherConfigs"], ({ schedule, teacherConfigs }) => {
++    const listEl = document.getElementById('teacherConfigList');
++    
++    if (!schedule || schedule.length === 0) {
++      listEl.innerHTML = '<p class="text-muted">Cß║ºn ─æß╗ông bß╗Ö TKB tr╞░ß╗¢c khi c├ái ─æß║╖t.</p>';
++      return;
++    }
++
++    // Extract unique teachers
++    const tp = new Set();
++    schedule.forEach(item => tp.add(item.teacher));
++    currentTeachers = Array.from(tp).sort();
++
++    const configs = teacherConfigs || {};
++    listEl.innerHTML = '';
++
++    currentTeachers.forEach(teacher => {
++      const container = document.createElement('div');
++      container.className = 'teacher-item';
++      
++      const info = document.createElement('div');
++      info.className = 'teacher-info';
++      const strong = document.createElement('strong');
++      strong.textContent = `≡ƒæ¿ΓÇì≡ƒÅ½ ${teacher}`;
++      const muted = document.createElement('span');
++      muted.className = 'text-muted';
++      muted.textContent = 'Offset (ph├║t) cho bot gß╗ìi:';
++      info.appendChild(strong);
++      info.appendChild(muted);
++      
++      const controls = document.createElement('div');
++      controls.className = 'teacher-controls';
++      
++      const input = document.createElement('input');
++      input.type = 'number';
++      input.className = 'form-control offset-input';
++      input.dataset.teacher = teacher;
++      input.value = (configs[teacher] && configs[teacher].offset) || 0;
++      
++      controls.appendChild(input);
++      container.appendChild(info);
++      container.appendChild(controls);
++      listEl.appendChild(container);
++    });
++  });
++}
++
++function saveTeacherConfigs() {
++  const inputs = document.querySelectorAll('.offset-input');
++  const configs = {};
++  
++  inputs.forEach(input => {
++    const teacher = input.dataset.teacher;
++    const offset = parseInt(input.value) || 0;
++    if (offset !== 0) {
++      configs[teacher] = { offset: offset };
++    }
++  });
++
++  chrome.storage.local.set({ teacherConfigs: configs }, () => {
++    const btn = document.getElementById('btnSaveConfigs');
++    const oldText = btn.textContent;
++    btn.textContent = "Γ£à ─É├ú L╞░u Th├ánh C├┤ng";
++    btn.classList.add('btn-accent');
++    btn.classList.remove('btn-primary');
++    
++    setTimeout(() => {
++      btn.textContent = oldText;
++      btn.classList.add('btn-primary');
++      btn.classList.remove('btn-accent');
++    }, 2000);
++  });
++}
++
++// ----------------------------------------------------
++// TAB 3: NOTIFICATIONS & LOGS
++// ----------------------------------------------------
++function loadNotificationLogs() {
++  chrome.storage.local.get("notificationLogs", ({ notificationLogs }) => {
++    const logList = document.getElementById('logList');
++    if (!notificationLogs || notificationLogs.length === 0) {
++      logList.innerHTML = '<p class="text-muted">Ch╞░a c├│ hoß║ít ─æß╗Öng n├áo ─æ╞░ß╗úc ghi nhß║¡n.</p>';
++      return;
++    }
++
++    logList.innerHTML = '';
++    notificationLogs.forEach(log => {
++      const item = document.createElement('div');
++      item.className = 'log-item';
++      
++      const date = new Date(log.timestamp);
++      const timeStr = `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')} - ${date.toLocaleDateString('vi-VN')}`;
++      
++      const timeEl = document.createElement('span');
++      timeEl.className = 'log-time';
++      timeEl.textContent = timeStr;
++      const titleEl = document.createElement('span');
++      titleEl.className = 'log-title';
++      titleEl.textContent = log.title;
++      const msgEl = document.createElement('span');
++      msgEl.className = 'log-msg';
++      msgEl.textContent = log.message;
++      item.appendChild(timeEl);
++      item.appendChild(titleEl);
++      item.appendChild(msgEl);
++      logList.appendChild(item);
++    });
++  });
++}
+diff --git a/diff.txt b/diff.txt
+new file mode 100644
+index 0000000..3e0a937
+Binary files /dev/null and b/diff.txt differ
+diff --git a/diff3.txt b/diff3.txt
+new file mode 100644
+index 0000000..f4532bc
+--- /dev/null
++++ b/diff3.txt
+@@ -0,0 +1,1811 @@
++∩╗┐diff --git a/background.js b/background.js
++index 9cd99e0..8980bfd 100644
++--- a/background.js
+++++ b/background.js
++@@ -1,34 +1,40 @@
++-// background.js ╬ô├ç├╢ V1.6 Lifecycle Manager
+++// background.js ╬ô├ç├╢ V2.0 Lifecycle Manager (Fixed state persistence)
++ // Tr├ƒΓòæ├¡ng thΓö£├¡i: IDLE | PRE_CLASS | WATCHING | CLASS_DETECTED
++-// Bot ch├ƒΓòù├½ t├ƒΓòù├┤n t├ƒΓòæ├¡i khi c├ƒΓòæ┬║n. NgoΓö£├íi gi├ƒΓòù┬Ñ h├ƒΓòù├¼c = 0 RAM consumption.
+++// State lΓò₧Γûæu trong chrome.storage.session ╬ô├Ñ├å khΓö£Γöñng m├ƒΓòæ├æt khi Service Worker b├ƒΓòù├» Chrome kill
++ 
++-let state = "IDLE";
+++// ╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç
+++// STATE MANAGEMENT ╬ô├ç├╢ Persistent across SW restarts (Fix Bug 1)
+++// ╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç
+++async function getState() {
+++  const { botState } = await chrome.storage.session.get("botState");
+++  return botState || "IDLE";
+++}
+++
+++async function setState(newState) {
+++  await chrome.storage.session.set({ botState: newState });
+++  console.log(`[UIT] State ╬ô├Ñ├å ${newState}`);
+++}
++ 
++ // ╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç
++ // KH├ƒΓòùΓéºI CΓö£├çI ΓöÇ├ë├ƒΓòæΓòóT khi Extension ΓöÇ├ªΓò₧Γûæ├ƒΓòù├║c n├ƒΓòæ├¡p l├ƒΓòæ┬║n ΓöÇ├ª├ƒΓòæ┬║u
++ // ╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç
++ chrome.runtime.onInstalled.addListener((details) => {
++-  // Ch├ƒΓòù├½ kh├ƒΓòù╞Æi t├ƒΓòæ├¡o n├ƒΓòæΓöÉu lΓö£├í l├ƒΓòæ┬║n ΓöÇ├ª├ƒΓòæ┬║u cΓö£├íi ΓöÇ├ª├ƒΓòæΓòût (install)
++-  // N├ƒΓòæΓöÉu lΓö£├í c├ƒΓòæ┬íp nh├ƒΓòæ┬ít (update) ho├ƒΓòæΓòûc reload thΓö£┬╝ gi├ƒΓòù┬╗ nguyΓö£┬¼n d├ƒΓòù┬╗ li├ƒΓòù├ºu cΓö╝ΓîÉ
++   if (details.reason === "install") {
++     chrome.storage.local.set({ schedule: [], zaloGroup: "", isActive: true });
++     console.log("[UIT] L├ƒΓòæ┬║n ΓöÇ├ª├ƒΓòæ┬║u cΓö£├íi ΓöÇ├ª├ƒΓòæΓòût: Kh├ƒΓòù╞Æi t├ƒΓòæ├¡o Storage.");
++   }
++-  
++-  // Alarm nh├ƒΓòæΓòú: check 1 l├ƒΓòæ┬║n / 5 phΓö£Γòæt. Chrome alarm KHΓö£├╢NG t├ƒΓòù├ªn RAM.
+++
++   chrome.alarms.get("lifecycleCheck", (a) => {
++     if (!a) chrome.alarms.create("lifecycleCheck", { periodInMinutes: 5 });
++   });
++-  // Update checker: 12 ti├ƒΓòæΓöÉng / 1 l├ƒΓòæ┬║n
++   chrome.alarms.get("updateCheck", (a) => {
++     if (!a) chrome.alarms.create("updateCheck", { periodInMinutes: 720 });
++   });
++-  console.log("[UIT v1.9] Extension ready. Alarms checked.");
++-  
+++  console.log("[UIT v2.0] Extension ready. Alarms checked.");
+++
++   checkForUpdates();
++ });
++ 
++-// Khi Chrome restart, alarm t├ƒΓòùΓûÆ t├ƒΓòæ├¡o l├ƒΓòæ├¡i n├ƒΓòæΓöÉu chΓò₧Γûæa cΓö£Γöé
++ chrome.runtime.onStartup.addListener(() => {
++   chrome.alarms.get("lifecycleCheck", (a) => {
++     if (!a) chrome.alarms.create("lifecycleCheck", { periodInMinutes: 5 });
++@@ -36,14 +42,14 @@ chrome.runtime.onStartup.addListener(() => {
++   chrome.alarms.get("updateCheck", (a) => {
++     if (!a) chrome.alarms.create("updateCheck", { periodInMinutes: 720 });
++   });
++-  
+++
++   checkForUpdates();
++ });
++ 
++ // ╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç
++ // HΓö£├çM CHΓö£├¼NH: Ki├ƒΓòù├óm tra gi├ƒΓòù┬Ñ h├ƒΓòù├¼c cΓö£Γöé s├ƒΓòæ┬╗p t├ƒΓòù┬ói khΓö£Γöñng
++ // ╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç
++-function getImminentClass(schedule) {
+++function getImminentClass(schedule, teacherConfigs = {}) {
++   const now = new Date();
++   const dayMap = {
++     "Ch├ƒΓòù┬║ nh├ƒΓòæ┬ít": 0, "Th├ƒΓòùΓîÉ 2": 1, "Th├ƒΓòùΓîÉ 3": 2,
++@@ -60,11 +66,17 @@ function getImminentClass(schedule) {
++ 
++     const classStart = new Date();
++     classStart.setHours(h, m, 0, 0);
++-    const diff = (classStart - now) / 60000; // phΓö£Γòæt
++ 
++-    // Trong vΓö£Γûông 30 phΓö£Γòæt trΓò₧Γûæ├ƒΓòù┬óc vΓö£├í 90 phΓö£Γòæt sau khi l├ƒΓòù┬óp b├ƒΓòæ┬╗t ΓöÇ├ª├ƒΓòæ┬║u
+++    let offsetMinutes = 0;
+++    if (teacherConfigs && teacherConfigs[item.teacher]) {
+++      offsetMinutes = parseInt(teacherConfigs[item.teacher].offset) || 0;
+++    }
+++    classStart.setMinutes(classStart.getMinutes() + offsetMinutes);
+++
+++    const diff = (classStart - now) / 60000;
+++
++     if (diff <= 30 && diff > -90) {
++-      return item;
+++      return { ...item, _appliedOffset: offsetMinutes };
++     }
++   }
++   return null;
++@@ -73,7 +85,7 @@ function getImminentClass(schedule) {
++ // ╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç
++ // VΓö£├åNG ΓöÇ├ë├ƒΓòù┬úI: Ch├ƒΓòæ├¡y m├ƒΓòù├╣i 5 phΓö£Γòæt ho├ƒΓòæΓòûc Check Update
++ // ╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç
++-chrome.alarms.onAlarm.addListener((alarm) => {
+++chrome.alarms.onAlarm.addListener(async (alarm) => {
++   if (alarm.name === "updateCheck") {
++     checkForUpdates();
++     return;
++@@ -81,44 +93,70 @@ chrome.alarms.onAlarm.addListener((alarm) => {
++ 
++   if (alarm.name !== "lifecycleCheck") return;
++ 
++-  chrome.storage.local.get(["schedule", "isActive"], ({ schedule, isActive }) => {
++-    if (!isActive || !schedule || schedule.length === 0) return;
+++  const { schedule, isActive, teacherConfigs } = await chrome.storage.local.get(["schedule", "isActive", "teacherConfigs"]);
+++  if (!isActive || !schedule || schedule.length === 0) return;
++ 
++-    const imminentClass = getImminentClass(schedule);
+++  const state = await getState();
+++  const imminentClass = getImminentClass(schedule, teacherConfigs || {});
++ 
++-    // ChΓò₧Γûæa t├ƒΓòù┬ói gi├ƒΓòù┬Ñ ╬ô├Ñ├å gi├ƒΓòù┬╗ IDLE, khΓö£Γöñng lΓö£├ím gΓö£┬╝
++-    if (!imminentClass && state === "IDLE") return;
+++  if (!imminentClass && state === "IDLE") return;
++ 
++-    // H├ƒΓòæΓöÉt gi├ƒΓòù┬Ñ (ΓöÇ├ªΓö£├║ qua 90 phΓö£Γòæt) ╬ô├Ñ├å reset v├ƒΓòù├╝ IDLE
++-    if (!imminentClass && state !== "IDLE") {
++-      console.log("[UIT] H├ƒΓòæΓöÉt khung gi├ƒΓòù┬Ñ. Reset v├ƒΓòù├╝ IDLE.");
++-      sendSleepToTeams();
++-      state = "IDLE";
+++  if (!imminentClass && state !== "IDLE") {
+++    console.log("[UIT] H├ƒΓòæΓöÉt khung gi├ƒΓòù┬Ñ. Reset v├ƒΓòù├╝ IDLE.");
+++    sendSleepToTeams();
+++    await setState("IDLE");
+++    return;
+++  }
+++
+++  if (imminentClass && state === "IDLE") {
+++    // Fix Bug 2: B├ƒΓòù├à qua n├ƒΓòæΓöÉu ΓöÇ├ªΓö£├║ join l├ƒΓòù┬óp nΓö£├íy trong vΓö£Γûông 90 phΓö£Γòæt qua
+++    const { recentlyJoinedUntil } = await chrome.storage.session.get("recentlyJoinedUntil");
+++    if (recentlyJoinedUntil && Date.now() < recentlyJoinedUntil) {
+++      console.log("[UIT] ΓöÇ├ëΓö£├║ join l├ƒΓòù┬óp trong phiΓö£┬¼n nΓö£├íy, b├ƒΓòù├à qua re-trigger.");
++       return;
++     }
++ 
++-    // S├ƒΓòæ┬╗p t├ƒΓòù┬ói gi├ƒΓòù┬Ñ + ΓöÇ├ªang IDLE ╬ô├Ñ├å kΓö£┬ích ho├ƒΓòæ├¡t PRE_CLASS
++-    if (imminentClass && state === "IDLE") {
++-      state = "PRE_CLASS";
++-      console.log(`[UIT] S├ƒΓòæ┬╗p cΓö£Γöé l├ƒΓòù┬óp: ${imminentClass.name}. Chuy├ƒΓòù├ón PRE_CLASS ╬ô├Ñ├å WATCHING.`);
+++    await setState("PRE_CLASS");
+++    const offsetText = imminentClass._appliedOffset
+++      ? ` (ΓöÇ├ëΓö£├║ ΓöÇ├ªi├ƒΓòù├╝u ch├ƒΓòù├½nh ${imminentClass._appliedOffset > 0 ? '+' : ''}${imminentClass._appliedOffset}p)` : '';
+++    console.log(`[UIT] S├ƒΓòæ┬╗p cΓö£Γöé l├ƒΓòù┬óp: ${imminentClass.name}${offsetText}. Chuy├ƒΓòù├ón PRE_CLASS ╬ô├Ñ├å WATCHING.`);
++ 
++-      chrome.notifications.create({
++-        type: "basic",
++-        iconUrl: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==",
++-        title: "╬ô├àΓûæ S├ƒΓòæ┬╗p cΓö£Γöé l├ƒΓòù┬óp h├ƒΓòù├¼c!",
++-        message: `${imminentClass.name} ╬ô├ç├╢ GV: ${imminentClass.teacher}. Bot ΓöÇ├ªang b├ƒΓòæ┬ít c├ƒΓòæ├║m bi├ƒΓòæΓöÉn Teams.`
++-      });
+++    sendNotification(
+++      "╬ô├àΓûæ S├ƒΓòæ┬╗p cΓö£Γöé l├ƒΓòù┬óp h├ƒΓòù├¼c!",
+++      `${imminentClass.name} ╬ô├ç├╢ GV: ${imminentClass.teacher}${offsetText}. Bot ΓöÇ├ªang b├ƒΓòæ┬ít c├ƒΓòæ├║m bi├ƒΓòæΓöÉn Teams.`
+++    );
++ 
++-      wakeUpTeams(imminentClass);
++-    }
++-  });
+++    wakeUpTeams(imminentClass);
+++  }
++ });
++ 
+++// ╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç
+++// TRΓö£├«NH T├ƒΓòæ├íO THΓö£├╢NG BΓö£├╝O (NOTIFICATION SYSTEM V2.0)
+++// ╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç
+++function sendNotification(title, message, requireInteraction = false, type = "basic") {
+++  const notifId = "uit_notif_" + Date.now();
+++  chrome.notifications.create(notifId, {
+++    type: type,
+++    iconUrl: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==",
+++    title: title,
+++    message: message,
+++    requireInteraction: requireInteraction
+++  });
+++
+++  chrome.storage.local.get("notificationLogs", ({ notificationLogs }) => {
+++    let logs = notificationLogs || [];
+++    logs.unshift({ timestamp: Date.now(), title, message });
+++    if (logs.length > 20) logs = logs.slice(0, 20);
+++    chrome.storage.local.set({ notificationLogs: logs });
+++  });
+++
+++  return notifId;
+++}
+++
++ // ╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç
++ // ΓöÇ├ëΓö£├╝NH TH├ƒΓòù┬┐C Teams
++ // ╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç
++ function wakeUpTeams(classInfo) {
++-  // T├ƒΓòùΓûÆ ΓöÇ├ª├ƒΓòù├ûng c├ƒΓòæ├æp quy├ƒΓòù├╝n Notifications, Cam, Mic cho Teams ΓöÇ├ª├ƒΓòù├ó kh├ƒΓòù├ài hi├ƒΓòù├ºn b├ƒΓòæ├║ng h├ƒΓòù├ài
++   const teamsPattern = "https://teams.cloud.microsoft/*";
++   if (chrome.contentSettings) {
++     chrome.contentSettings.notifications.set({ primaryPattern: teamsPattern, setting: "allow" });
++@@ -133,32 +171,27 @@ function wakeUpTeams(classInfo) {
++     }
++ 
++     if (tabs && tabs.length > 0) {
++-      // ΓöÇ├ëΓö£├║ cΓö£Γöé tab Teams ╬ô├Ñ├å g├ƒΓòù┬íi l├ƒΓòù├ºnh WAKE_UP
++       tabs.forEach(tab => {
++         if (tab && tab.id) {
++           chrome.tabs.sendMessage(tab.id, {
++             type: "WAKE_UP",
++             classInfo: classInfo
++           }, () => {
++-             if (chrome.runtime.lastError) { /* ignore closed tab error */ }
+++            if (chrome.runtime.lastError) {}
++           });
++         }
++       });
++-      state = "WATCHING";
+++      setState("WATCHING");
++     } else {
++-      // ChΓò₧Γûæa cΓö£Γöé tab Teams ╬ô├Ñ├å m├ƒΓòù╞Æ m├ƒΓòù┬ói
++       chrome.tabs.create({ url: "https://teams.cloud.microsoft", active: false }, (tab) => {
++         if (chrome.runtime.lastError || !tab || !tab.id) {
++           console.error("[UIT] Failed to create Teams tab or no window available.");
++           return;
++         }
++ 
++-        // Content script s├ƒΓòæΓò£ t├ƒΓòùΓûÆ nh├ƒΓòæ┬ín WAKE_UP sau khi load xong vΓö£┬╝ state = WATCHING
++-        state = "WATCHING";
++-        // Sau 8 giΓö£├│y ch├ƒΓòù┬Ñ Teams load, g├ƒΓòù┬íi wake up
+++        setState("WATCHING");
++         const targetTabId = tab.id;
++         setTimeout(() => {
++-          // Check l├ƒΓòæ├¡i xem tab cΓö£Γûôn s├ƒΓòù├ªng khΓö£Γöñng trΓò₧Γûæ├ƒΓòù┬óc khi g├ƒΓòù┬íi
++           chrome.tabs.get(targetTabId, (currentTab) => {
++             if (!chrome.runtime.lastError && currentTab && currentTab.id) {
++               chrome.tabs.sendMessage(currentTab.id, {
++@@ -183,7 +216,7 @@ function sendSleepToTeams() {
++       tabs.forEach(tab => {
++         if (tab && tab.id) {
++           chrome.tabs.sendMessage(tab.id, { type: "SLEEP_NOW" }, () => {
++-            if (chrome.runtime.lastError) {} 
+++            if (chrome.runtime.lastError) {}
++           });
++         }
++       });
++@@ -196,71 +229,67 @@ function sendSleepToTeams() {
++ // ╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç
++ chrome.runtime.onMessage.addListener((req, sender, sendResponse) => {
++ 
++-  // Content CITD bΓö£├¡o ΓöÇ├ªΓö£├║ sync TKB xong
++   if (req.type === "SCHEDULE_SYNCED") {
++-    chrome.notifications.create({
++-      type: "basic",
++-      iconUrl: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==",
++-      title: "╬ô┬ú├á ΓöÇ├ë├ƒΓòù├┤ng b├ƒΓòù├û l├ƒΓòù├»ch thΓö£├ính cΓö£Γöñng!",
++-      message: `ΓöÇ├ëΓö£├║ lΓò₧Γûæu ${req.data.length} mΓö£Γöñn h├ƒΓòù├¼c. Bot s├ƒΓòæΓò£ t├ƒΓòùΓûÆ b├ƒΓòæ┬ít trΓò₧Γûæ├ƒΓòù┬óc m├ƒΓòù├╣i gi├ƒΓòù┬Ñ h├ƒΓòù├¼c.`
++-    });
+++    sendNotification(
+++      "╬ô┬ú├á ΓöÇ├ë├ƒΓòù├┤ng b├ƒΓòù├û l├ƒΓòù├»ch thΓö£├ính cΓö£Γöñng!",
+++      `ΓöÇ├ëΓö£├║ lΓò₧Γûæu ${req.data.length} mΓö£Γöñn h├ƒΓòù├¼c. Bot s├ƒΓòæΓò£ t├ƒΓòùΓûÆ b├ƒΓòæ┬ít trΓò₧Γûæ├ƒΓòù┬óc m├ƒΓòù├╣i gi├ƒΓòù┬Ñ h├ƒΓòù├¼c.`
+++    );
++     sendResponse({ ok: true });
++   }
++ 
++-  // Content Teams bΓö£├¡o tΓö£┬╝m th├ƒΓòæ├æy link GV
++   else if (req.type === "CLASS_DETECTED") {
++-    if (state === "CLASS_DETECTED") return; // ch├ƒΓòù├ªng duplicate
++-    state = "CLASS_DETECTED";
++-    console.log("[UIT] CLASS_DETECTED! Teacher:", req.teacherName, "| Link:", req.link);
++-
++-    // 1. Notification
++-    chrome.notifications.create({
++-      type: "basic",
++-      requireInteraction: true,
++-      iconUrl: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==",
++-      title: "Γëí╞Æ├£┬┐ GV v├ƒΓòù┬╜a b├ƒΓòæ┬ít l├ƒΓòù┬óp!",
++-      message: `${req.courseName} ╬ô├ç├╢ ${req.teacherName}. ΓöÇ├ëang tham gia...`
++-    });
+++    getState().then(async (currentState) => {
+++      if (currentState === "CLASS_DETECTED") {
+++        sendResponse({ ok: true });
+++        return;
+++      }
+++      await setState("CLASS_DETECTED");
+++      console.log("[UIT] CLASS_DETECTED! Teacher:", req.teacherName, "| Link:", req.link);
++ 
++-    // 2. M├ƒΓòù╞Æ tab Join meeting (Teams s├ƒΓòæΓò£ t├ƒΓòùΓûÆ detect t├ƒΓòæ┬╗t cam/mic qua URL params)
++-    const joinUrl = buildJoinUrl(req.link);
++-    // LΓò₧Γûæu t├ƒΓòæ├¡m th├ƒΓòù┬Ñi link nΓö£├íy vΓö£├ío Storage ΓöÇ├ª├ƒΓòù├ó Popup UI cΓö£Γöé th├ƒΓòù├ó mΓö£Γöéc ra hi├ƒΓòù├ºn Icon Video
++-    chrome.storage.local.set({ lastMeetingLink: joinUrl, lastMeetingClass: req.courseName, lastMeetingTime: Date.now() });
+++      sendNotification(
+++        "Γëí╞Æ├£┬┐ GV v├ƒΓòù┬╜a b├ƒΓòæ┬ít l├ƒΓòù┬óp!",
+++        `${req.courseName} ╬ô├ç├╢ ${req.teacherName}. ΓöÇ├ëang tham gia...`,
+++        true
+++      );
++ 
++-    chrome.tabs.create({ url: joinUrl, active: true }, (tab) => {
++-      if (chrome.runtime.lastError) {
++-        console.warn("[UIT] Join tab creation failed:", chrome.runtime.lastError.message);
++-      }
++-    });
+++      const joinUrl = buildJoinUrl(req.link);
+++      chrome.storage.local.set({ lastMeetingLink: joinUrl, lastMeetingClass: req.courseName, lastMeetingTime: Date.now() });
++ 
++-    // 3. T├ƒΓòæ┬╗t Observer ╬ô├Ñ├å IDLE
++-    if (sender && sender.tab && sender.tab.id) {
++-      chrome.tabs.sendMessage(sender.tab.id, { type: "SLEEP_NOW" }, () => {
++-        if (chrome.runtime.lastError) {} 
+++      chrome.tabs.create({ url: joinUrl, active: true }, (tab) => {
+++        if (chrome.runtime.lastError) {
+++          console.warn("[UIT] Join tab creation failed:", chrome.runtime.lastError.message);
+++        }
++       });
++-    }
++-    sendSleepToTeams();
++-    state = "IDLE";
++-    sendResponse({ ok: true });
+++
+++      if (sender && sender.tab && sender.tab.id) {
+++        chrome.tabs.sendMessage(sender.tab.id, { type: "SLEEP_NOW" }, () => {
+++          if (chrome.runtime.lastError) {}
+++        });
+++      }
+++      sendSleepToTeams();
+++
+++      // Fix Bug 2: Ch├ƒΓòæΓòûn re-trigger trong 90 phΓö£Γòæt ti├ƒΓòæΓöÉp theo
+++      await chrome.storage.session.set({ recentlyJoinedUntil: Date.now() + 90 * 60 * 1000 });
+++      await setState("IDLE");
+++      sendResponse({ ok: true });
+++    });
+++    return true; // async response
++   }
++ 
++-  // Popup h├ƒΓòù├ài tr├ƒΓòæ├¡ng thΓö£├¡i VΓö£├åNG ΓöÇ├ë├ƒΓòù┬úI
++   else if (req.type === "GET_STATE") {
++-    sendResponse({ state });
+++    getState().then(state => sendResponse({ state }));
+++    return true; // async response
++   }
++ 
++-  // Popup h├ƒΓòù├ài tr├ƒΓòæ├¡ng thΓö£├¡i ΓöÇ├ëΓöÇ├⌐NG NH├ƒΓòæ┬╝P (Smart Checklist V1.8)
++   else if (req.type === "CHECK_LOGINS") {
++     let citdLogin = false;
++     let teamsLogin = false;
++ 
++-    // QuΓö£ΓîÉt cookie c├ƒΓòù┬║a Portal
++     chrome.cookies.getAll({ url: "https://student.citd.edu.vn" }, (citdCookies) => {
++       if (citdCookies && citdCookies.length > 0) {
++         citdLogin = true;
++       }
++-      
++-      // Sang QuΓö£ΓîÉt Teams (Ph├ƒΓòæ├║i kh├ƒΓòù┬óp chΓö£┬ính xΓö£├¡c host_permissions trong manifest)
+++
++       chrome.cookies.getAll({ url: "https://teams.cloud.microsoft" }, (teamCookies) => {
++         if (teamCookies && teamCookies.length > 0) {
++           teamsLogin = true;
++@@ -268,9 +297,13 @@ chrome.runtime.onMessage.addListener((req, sender, sendResponse) => {
++         sendResponse({ citdLogin, teamsLogin });
++       });
++     });
++-    
++-    // YΓö£┬¼u c├ƒΓòæ┬║u tr├ƒΓòæ├║ Async cho Chrome Runtime
++-    return true; 
+++
+++    return true;
+++  }
+++
+++  else if (req.type === "SEND_NOTIFICATION") {
+++    sendNotification(req.title, req.message, req.requireInteraction);
+++    sendResponse({ ok: true });
++   }
++ 
++   return true;
++@@ -278,18 +311,14 @@ chrome.runtime.onMessage.addListener((req, sender, sendResponse) => {
++ 
++ // ╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç
++ // T├ƒΓòæ├íO URL JOIN V├ƒΓòù├£I T├ƒΓòæ┬½T CAM + MIC M├ƒΓòæΓòóC ΓöÇ├ë├ƒΓòù├¿NH
++-// Teams h├ƒΓòù├╣ tr├ƒΓòù├║ tham s├ƒΓòù├ª URL ΓöÇ├ª├ƒΓòù├ó preset device
++ // ╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç
++ function buildJoinUrl(originalLink) {
++-  // Gi├ƒΓòù┬╗ link g├ƒΓòù├ªc, thΓö£┬¼m fragment ΓöÇ├ª├ƒΓòù├ó Teams bi├ƒΓòæΓöÉt preset (cam off, mic off)
++-  // CΓö£├¡ch chu├ƒΓòæΓîÉn: Teams ΓöÇ├ª├ƒΓòù├¼c ?preferredCamera=off&preferredMicrophone=off
++   try {
++     const url = new URL(originalLink);
++     url.searchParams.set("preferredCamera", "off");
++     url.searchParams.set("preferredMicrophone", "off");
++     return url.toString();
++   } catch {
++-    // N├ƒΓòæΓöÉu URL l├ƒΓòù├╣i, tr├ƒΓòæ├║ v├ƒΓòù├╝ nguyΓö£┬¼n b├ƒΓòæ├║n
++     return originalLink;
++   }
++ }
++@@ -305,10 +334,9 @@ async function checkForUpdates() {
++     const localVersion = chrome.runtime.getManifest().version;
++     const remoteVersion = remoteManifest.version;
++ 
++-    // So sΓö£├¡nh chu├ƒΓòù├╣i semantic version ΓöÇ├ªΓò₧├¡n gi├ƒΓòæ├║n (vd: "1.9" < "2.0")
++     if (remoteVersion && remoteVersion !== localVersion && remoteVersion.localeCompare(localVersion, undefined, { numeric: true, sensitivity: 'base' }) > 0) {
++       console.log(`[UIT Auto-Update] CΓö£Γöé b├ƒΓòæ├║n m├ƒΓòù┬ói: v${remoteVersion}. MΓö£├¡y ΓöÇ├ªang ch├ƒΓòæ├¡y: v${localVersion}`);
++-      
+++
++       chrome.notifications.create("update_notifier", {
++         type: "basic",
++         iconUrl: "icon128.png",
++@@ -322,14 +350,11 @@ async function checkForUpdates() {
++   }
++ }
++ 
++-// B├ƒΓòæ┬╗t s├ƒΓòùΓûÆ ki├ƒΓòù├ºn ngΓò₧Γûæ├ƒΓòù┬Ñi dΓö£Γòúng Click vΓö£├ío Notification Update
++ chrome.notifications.onClicked.addListener((notificationId) => {
++   if (notificationId === "update_notifier") {
++-    // M├ƒΓòù╞Æ trang Repo GitHub ΓöÇ├ª├ƒΓòù├ó t├ƒΓòæ├║i m├ƒΓòù┬ói
++     chrome.tabs.create({ url: "https://github.com/hungpixi/UIT-Assistant" }, (tab) => {
++-       if (chrome.runtime.lastError) {}
+++      if (chrome.runtime.lastError) {}
++     });
++-    // XΓö£Γöéa notif
++     chrome.notifications.clear("update_notifier");
++   }
++ });
++diff --git a/content_citd.js b/content_citd.js
++index c1e41d1..d4b744d 100644
++--- a/content_citd.js
+++++ b/content_citd.js
++@@ -1,4 +1,4 @@
++-// content_citd.js ╬ô├ç├╢ V1.6 (Gi├ƒΓòù┬╗ nguyΓö£┬¼n logic, clean code)
+++// content_citd.js ╬ô├ç├╢ V2.0 (MutationObserver thay th├ƒΓòæΓöÉ polling)
++ // Ch├ƒΓòæ├¡y khi user m├ƒΓòù╞Æ student.citd.edu.vn/projects
++ // T├ƒΓòùΓûÆ ΓöÇ├ª├ƒΓòù├ûng quΓö£ΓîÉt b├ƒΓòæ├║ng TKB vΓö£├í lΓò₧Γûæu vΓö£├ío chrome.storage
++ 
++@@ -40,14 +40,18 @@ function scanSchedule() {
++   return true;
++ }
++ 
++-// Retry v├ƒΓòù┬ói interval vΓö£┬╝ trang dΓö£Γòúng Ajax/React (table load mu├ƒΓòù├ûn)
++-let retries = 0;
++-const interval = setInterval(() => {
++-  retries++;
++-  if (retries > 15) { // Timeout sau 30 giΓö£├│y
++-    clearInterval(interval);
++-    console.warn("[UIT CITD] Timeout: KhΓö£Γöñng tΓö£┬╝m th├ƒΓòæ├æy b├ƒΓòæ├║ng TKB.");
++-    return;
++-  }
++-  if (scanSchedule()) clearInterval(interval);
++-}, 2000);
+++// Th├ƒΓòù┬í quΓö£ΓîÉt ngay n├ƒΓòæΓöÉu table ΓöÇ├ªΓö£├║ cΓö£Γöé s├ƒΓòæΓòín (trang load ΓöÇ├ª├ƒΓòù├┤ng b├ƒΓòù├û)
+++if (!scanSchedule()) {
+++  // Trang dΓö£Γòúng Ajax/React ╬ô├Ñ├å dΓö£Γòúng MutationObserver thay vΓö£┬╝ setInterval polling
+++  const observer = new MutationObserver(() => {
+++    if (scanSchedule()) observer.disconnect();
+++  });
+++
+++  observer.observe(document.body, { childList: true, subtree: true });
+++
+++  // Safety: ng├ƒΓòæ┬╗t observer sau 30 giΓö£├│y n├ƒΓòæΓöÉu khΓö£Γöñng tΓö£┬╝m th├ƒΓòæ├æy b├ƒΓòæ├║ng
+++  setTimeout(() => {
+++    observer.disconnect();
+++    console.warn("[UIT CITD] Timeout: KhΓö£Γöñng tΓö£┬╝m th├ƒΓòæ├æy b├ƒΓòæ├║ng TKB sau 30 giΓö£├│y.");
+++  }, 30000);
+++}
++diff --git a/content_teams.js b/content_teams.js
++index 2657b1f..c56f7b8 100644
++--- a/content_teams.js
+++++ b/content_teams.js
++@@ -7,6 +7,7 @@ console.log("[UIT Teams] Module loaded. Waiting for WAKE_UP signal...");
++ let observer = null;
++ let scheduleData = [];
++ let classInfo = null;
+++let recentAttachments = []; // V2.0 Array for attachment tracking
++ 
++ // ╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç
++ // NH├ƒΓòæ┬╝N L├ƒΓòù├ÑNH T├ƒΓòù┬¼ BACKGROUND
++@@ -227,12 +228,16 @@ function checkNode(node) {
++ 
++   const html = node.innerHTML;
++ 
+++  // TΓö£┬╝m tΓö£┬¼n ngΓò₧Γûæ├ƒΓòù┬Ñi g├ƒΓòù┬íi (leo ngΓò₧Γûæ├ƒΓòù├║c DOM)
+++  const senderName = getSenderName(node);
+++
+++  // V2.0: Theo dΓö£Γòíi s├ƒΓòùΓûÆ ki├ƒΓòù├ºn n├ƒΓòù├ûp bΓö£├íi t├ƒΓòæ┬íp (├ƒΓòæ├║nh/file)
+++  detectAttachments(node, senderName);
+++
++   // Ki├ƒΓòù├óm tra cΓö£Γöé link meeting khΓö£Γöñng
++   const hasMeetingLink = html.includes("meetup-join") || html.includes("Tham gia cu├ƒΓòù├ûc h├ƒΓòù├¼p");
++   if (!hasMeetingLink) return;
++ 
++-  // TΓö£┬╝m tΓö£┬¼n ngΓò₧Γûæ├ƒΓòù┬Ñi g├ƒΓòù┬íi (leo ngΓò₧Γûæ├ƒΓòù├║c DOM)
++-  const senderName = getSenderName(node);
++   console.log("[UIT Teams] Meeting link detected. Sender:", senderName);
++ 
++   // ΓöÇ├ë├ƒΓòù├ªi chi├ƒΓòæΓöÉu v├ƒΓòù┬ói danh sΓö£├¡ch GV trong TKB
++@@ -255,6 +260,47 @@ function checkNode(node) {
++   reportClassDetected(matched.name, senderName, meetingLink);
++ }
++ 
+++// ╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç
+++// PHΓö£├⌐N TΓö£├¼CH ΓöÇ├ëΓö£├¼NH KΓö£├¬M / BΓö£├çI T├ƒΓòæ┬╝P (V2.0)
+++// ╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç
+++function detectAttachments(node, senderName) {
+++  // TΓö£┬╝m cΓö£├¡c th├ƒΓòæΓòù img (thΓò₧Γûæ├ƒΓòù┬Ñng lΓö£├í ├ƒΓòæ├║nh ΓöÇ├ªΓò₧Γûæ├ƒΓòù├║c g├ƒΓòù┬íi lΓö£┬¼n) 
+++  // Lo├ƒΓòæ├¡i tr├ƒΓòù┬╜ avatar profile picture
+++  const imgs = Array.from(node.querySelectorAll('img')).filter(img => {
+++    const src = img.src || "";
+++    // B├ƒΓòù├à qua cΓö£├¡c hΓö£┬╝nh ├ƒΓòæ├║nh c├ƒΓòù┬║a avatar, icon, emoji
+++    return !src.includes("avatar") && !src.includes("profile") && !src.includes("emoji");
+++  });
+++
+++  // TΓö£┬╝m cΓö£├¡c th├ƒΓòæΓòù ΓöÇ├ªΓö£┬ính kΓö£┬┐m mang Γö£Γò£ nghΓöÇΓîÉa lΓö£├í file Word/PDF/File nΓö£ΓîÉn
+++  const files = node.querySelectorAll('[data-tid="message-attachment"], .ui-chat__message__attachment');
+++
+++  if (imgs.length > 0 || files.length > 0) {
+++    const now = Date.now();
+++    
+++    // ThΓö£┬¼m m├ƒΓòù├ªc th├ƒΓòù┬Ñi gian vΓö£├ío m├ƒΓòæ├║ng
+++    recentAttachments.push(now);
+++
+++    // XoΓö£├¡ cΓö£├¡c m├ƒΓòù├ªc th├ƒΓòù┬Ñi gian cΓö╝ΓîÉ hΓò₧├¡n 60 giΓö£├│y (1 phΓö£Γòæt)
+++    recentAttachments = recentAttachments.filter(time => now - time <= 60000);
+++
+++    // N├ƒΓòæΓöÉu cΓö£Γöé 2 file ΓöÇ├ªΓö£┬ính kΓö£┬┐m tr├ƒΓòù╞Æ lΓö£┬¼n trong vΓö£Γûông 1 phΓö£Γòæt
+++    if (recentAttachments.length >= 2) {
+++      console.log("[UIT Teams] PhΓö£├¡t hi├ƒΓòù├ºn nhi├ƒΓòù├╝u file ΓöÇ├ªΓö£┬ính kΓö£┬┐m! C├ƒΓòæ├║nh bΓö£├¡o n├ƒΓòù├ûp bΓö£├íi t├ƒΓòæ┬íp.");
+++      
+++      chrome.runtime.sendMessage({
+++        type: "SEND_NOTIFICATION", 
+++        title: "Γëí╞Æ├£┬┐ BΓö£├¡o ΓöÇ├ª├ƒΓòù├ûng N├ƒΓòù├ûp BΓö£├íi T├ƒΓòæ┬íp!",
+++        message: `M├ƒΓòù├¼i ngΓò₧Γûæ├ƒΓòù┬Ñi ΓöÇ├ªang g├ƒΓòù┬íi ├ƒΓòæ├║nh/file liΓö£┬¼n t├ƒΓòù├æc (CΓö£Γöé th├ƒΓòù├ó th├ƒΓòæ┬║y giao bΓö£├íi). VΓö£├ío check ngay!`,
+++        requireInteraction: true
+++      });
+++
+++      // Clear m├ƒΓòæ├║ng ΓöÇ├ª├ƒΓòù├ó trΓö£├¡nh spam liΓö£┬¼n t├ƒΓòù├æc
+++      recentAttachments = [];
+++    }
+++  }
+++}
+++
++ // ╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç
++ // TΓö£├«M TΓö£├¿N NGΓò₧┬╗├ƒΓòù┬úI G├ƒΓòù┬╝I (leo DOM ngΓò₧Γûæ├ƒΓòù├║c lΓö£┬¼n)
++ // ╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç
++diff --git a/manifest.json b/manifest.json
++index ba31cf7..b172a85 100644
++--- a/manifest.json
+++++ b/manifest.json
++@@ -1,7 +1,7 @@
++ {
++   "manifest_version": 3,
++   "name": "UIT Student Assistant",
++-  "version": "1.9",
+++  "version": "2.0",
++   "description": "T├ƒΓòùΓûÆ ΓöÇ├ª├ƒΓòù├ûng theo dΓö£Γòíi l├ƒΓòù├»ch h├ƒΓòù├¼c, t├ƒΓòùΓûÆ ΓöÇ├ª├ƒΓòù├ûng Join Meeting vΓö£├í Bypass s├ƒΓòæ├║nh Pre-join.",
++   "icons": {
++     "128": "icon128.png"
++@@ -28,6 +28,7 @@
++     "default_icon": "icon128.png",
++     "default_title": "UIT Assistant - Hungpixi"
++   },
+++  "options_page": "dashboard.html",
++   "content_scripts": [
++     {
++       "matches": ["*://student.citd.edu.vn/projects*"],
++diff --git a/popup.css b/popup.css
++index dcafe86..7196a60 100644
++--- a/popup.css
+++++ b/popup.css
++@@ -1,209 +1,425 @@
++ body {
++   width: 380px;
++-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+++  height: 560px;
++   margin: 0;
++-  padding: 15px;
++-  background-color: #f8f9fa;
+++  padding: 0;
+++  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+++  background: linear-gradient(135deg, #e0eafc 0%, #cfdef3 100%);
++   color: #333;
+++  display: flex;
+++  flex-direction: column;
+++  overflow: hidden; /* Prevent body scrolling */
+++  position: relative;
+++}
+++
+++/* Background elements for Premium Glass effect */
+++.glass-bg-shape {
+++  position: absolute;
+++  border-radius: 50%;
+++  filter: blur(50px);
+++  z-index: -1;
+++}
+++.shape-1 {
+++  width: 250px;
+++  height: 250px;
+++  background: rgba(116, 123, 255, 0.4);
+++  top: -50px;
+++  left: -50px;
+++}
+++.shape-2 {
+++  width: 200px;
+++  height: 200px;
+++  background: rgba(40, 167, 69, 0.3);
+++  bottom: 0px;
+++  right: -50px;
+++}
+++
+++/* Common Reusable Classes */
+++.glass-panel {
+++  background: rgba(255, 255, 255, 0.6);
+++  backdrop-filter: blur(12px);
+++  -webkit-backdrop-filter: blur(12px);
+++  border: 1px solid rgba(255, 255, 255, 0.5);
+++  border-radius: 12px;
+++  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
++ }
+++.mt-2 { margin-top: 8px; }
++ 
++-.header {
+++/* Header */
+++.app-header {
++   display: flex;
++   align-items: center;
++-  margin-bottom: 20px;
+++  padding: 16px 20px;
+++  background: rgba(255, 255, 255, 0.3);
+++  backdrop-filter: blur(10px);
+++  border-bottom: 1px solid rgba(255,255,255,0.4);
+++  z-index: 10;
++ }
++-
++ .logo {
++   width: 40px;
++   height: 40px;
+++  border-radius: 10px;
++   margin-right: 15px;
++-  border-radius: 8px;
+++  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
++ }
++-
++-h1 {
+++.header-text h1 {
++   font-size: 18px;
++-  color: #0056b3;
+++  color: #1a237e;
++   margin: 0;
++   font-weight: 700;
+++  letter-spacing: -0.5px;
+++}
+++.header-text span {
+++  font-size: 11px;
+++  color: #5c6bc0;
+++  font-weight: 600;
+++  text-transform: uppercase;
+++}
+++
+++/* Content Area */
+++.content-area {
+++  flex: 1;
+++  width: 100%;
+++  position: relative;
+++  overflow: hidden;
+++  padding: 15px;
+++  box-sizing: border-box;
+++}
+++
+++.section-title {
+++  font-size: 12px;
+++  font-weight: 700;
+++  color: #666;
+++  margin: 0 0 10px 5px;
+++  text-transform: uppercase;
+++  letter-spacing: 0.5px;
+++}
+++
+++/* Tab Panels */
+++.tab-pane {
+++  display: none;
+++  height: 100%;
+++  width: 100%;
+++  animation: fadeIn 0.3s ease;
+++}
+++.tab-pane.active {
+++  display: block;
+++}
+++@keyframes fadeIn {
+++  from { opacity: 0; transform: translateY(5px); }
+++  to { opacity: 1; transform: translateY(0); }
++ }
++ 
++-.status-box {
+++/* Tab 1 - Home */
+++.status-card {
++   display: flex;
++   align-items: center;
++-  padding: 12px;
++-  background: white;
++-  border-radius: 8px;
++-  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+++  padding: 12px 15px;
++   margin-bottom: 15px;
++-  font-weight: 500;
++ }
++-
++ .status-indicator {
++-  width: 12px;
++-  height: 12px;
+++  width: 14px;
+++  height: 14px;
++   border-radius: 50%;
++-  margin-right: 12px;
+++  margin-right: 15px;
++   background-color: #ccc;
++   box-shadow: 0 0 5px rgba(0,0,0,0.1);
++ }
++-.status-indicator.idle { background-color: #ccc; }
++-.status-indicator.pre { background-color: #ffc107; box-shadow: 0 0 8px #ffc107; }
++-.status-indicator.watching { background-color: #dc3545; box-shadow: 0 0 8px #dc3545; animation: pulse 1s infinite; }
++-.status-indicator.detected { background-color: #28a745; box-shadow: 0 0 8px #28a745; }
++-
+++.status-indicator.idle { background-color: #a0aab5; }
+++.status-indicator.pre { background-color: #faad14; box-shadow: 0 0 10px rgba(250, 173, 20, 0.5); }
+++.status-indicator.watching { background-color: #ff4d4f; box-shadow: 0 0 10px rgba(255, 77, 79, 0.5); animation: pulse 1s infinite; }
+++.status-indicator.detected { background-color: #52c41a; box-shadow: 0 0 10px rgba(82, 196, 26, 0.5); }
++ @keyframes pulse {
++-  0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.7); }
++-  70% { transform: scale(1.1); box-shadow: 0 0 0 8px rgba(220, 53, 69, 0); }
++-  100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(220, 53, 69, 0); }
+++  0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 77, 79, 0.7); }
+++  70% { transform: scale(1.1); box-shadow: 0 0 0 8px rgba(255, 77, 79, 0); }
+++  100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 77, 79, 0); }
++ }
++-
++-hr {
++-  border: none;
++-  border-top: 1px dashed #ddd;
++-  margin: 15px 0;
+++.status-info {
+++  display: flex;
+++  flex-direction: column;
++ }
++-
++-.wizard {
++-  background: white;
++-  padding: 15px;
++-  border-radius: 8px;
++-  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+++.status-label {
+++  font-size: 10px;
+++  color: #777;
+++  text-transform: uppercase;
+++  font-weight: 700;
+++  margin-bottom: 2px;
++ }
++-
++-.wizard h3 {
++-  margin: 0 0 5px 0;
++-  font-size: 15px;
++-  color: #0056b3;
+++.status-info strong {
+++  font-size: 14px;
+++  color: #333;
++ }
++ 
++-.subtitle {
++-  font-size: 12px;
++-  color: #666;
++-  margin: 0 0 15px 0;
+++.hero-action {
+++  padding: 20px;
+++  text-align: center;
+++  margin-bottom: 20px;
++ }
++-
++-.step {
+++.hero-header {
++   display: flex;
++-  margin-bottom: 12px;
++   align-items: center;
+++  justify-content: center;
+++  margin-bottom: 15px;
++ }
++-
++-.step-icon {
++-  font-size: 20px;
+++.hero-icon {
+++  font-size: 32px;
++   margin-right: 12px;
++ }
++-
++-.step-content {
++-  flex: 1;
++-  display: flex;
++-  flex-direction: column;
+++.hero-text { text-align: left; }
+++.hero-text h3 { margin: 0; font-size: 16px; color: #1a237e; }
+++.hero-text p { margin: 4px 0 0 0; font-size: 12px; color: #555; }
+++.border-glow {
+++  border: 1px solid rgba(40, 167, 69, 0.4);
+++  background: linear-gradient(135deg, rgba(255,255,255,0.8), rgba(240, 255, 244, 0.6));
++ }
++-
++-.step-content label {
++-  font-size: 13px;
+++.btn-primary {
+++  width: 100%;
+++  padding: 12px;
+++  border-radius: 8px;
+++  border: none;
+++  background: linear-gradient(135deg, #28a745, #20c997);
+++  color: white;
++   font-weight: 600;
++-  margin-bottom: 4px;
+++  font-size: 14px;
+++  cursor: pointer;
+++  transition: all 0.2s;
+++  box-shadow: 0 4px 10px rgba(40, 167, 69, 0.3);
+++}
+++.btn-primary:hover {
+++  transform: translateY(-2px);
+++  box-shadow: 0 6px 15px rgba(40, 167, 69, 0.4);
+++}
+++.btn-success {
+++  background: #28a745; border: none; padding: 10px; color: white; border-radius: 6px; cursor: pointer; width: 100%; font-weight: bold;
++ }
++ 
+++.grid-actions {
+++  display: grid;
+++  grid-template-columns: 1fr 1fr;
+++  gap: 10px;
+++}
++ .action-btn {
++-  padding: 8px 12px;
++-  background-color: #e9ecef;
++-  border: 1px solid #ced4da;
++-  color: #495057;
++-  border-radius: 6px;
++-  font-size: 13px;
+++  background: rgba(255, 255, 255, 0.5);
+++  border: 1px solid rgba(255,255,255,0.8);
+++  padding: 10px;
+++  border-radius: 8px;
++   cursor: pointer;
++-  font-weight: 600;
+++  display: flex;
+++  align-items: center;
+++  gap: 8px;
+++  font-size: 13px;
+++  font-weight: 500;
+++  color: #444;
++   transition: all 0.2s;
++-  text-align: center;
++ }
++ .action-btn:hover {
++-  background-color: #dee2e6;
+++  background: white;
+++  transform: translateY(-1px);
+++  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+++}
+++.action-btn.btn-active-success {
+++  background: rgba(40, 167, 69, 0.1);
+++  border-color: #28a745;
+++  color: #28a745;
++ }
++ 
++-.action-btn.highlight {
++-  background-color: #0056b3;
++-  color: white;
++-  border-color: #0056b3;
+++/* Tab 2 - Schedule */
+++.schedule-scroll-area {
+++  max-height: 300px; /* limits inner scroll instead of popup scroll */
+++  overflow-y: auto;
+++  padding-right: 5px;
++ }
++-.action-btn.highlight:hover {
++-  background-color: #004085;
+++.schedule-scroll-area::-webkit-scrollbar {
+++  width: 4px;
++ }
++-
++-.schedule-section h3 {
++-  font-size: 15px;
++-  color: #0056b3;
+++.schedule-scroll-area::-webkit-scrollbar-thumb {
+++  background: rgba(0,0,0,0.15);
+++  border-radius: 10px;
++ }
++-
++-#scheduleList {
+++.schedule-list {
++   list-style: none;
++   padding: 0;
++   margin: 0;
++-  max-height: 400px;
++-  overflow-y: auto;
++-  scrollbar-width: thin;
++-}
++-
++-#scheduleList::-webkit-scrollbar {
++-  width: 6px;
++ }
++-
++-#scheduleList::-webkit-scrollbar-thumb {
++-  background-color: #ced4da;
++-  border-radius: 10px;
++-}
++-
++-#scheduleList li.day-header {
++-  background: #0056b3;
++-  color: white;
+++.schedule-list li.day-header {
+++  background: rgba(0, 86, 179, 0.1);
+++  color: #0056b3;
++   padding: 6px 12px;
++-  border-radius: 5px;
+++  border-radius: 4px;
++   margin: 10px 0 5px 0;
++-  font-size: 13px;
++-  border-left: none;
++-  box-shadow: none;
+++  font-size: 11px;
+++  font-weight: 700;
+++  text-transform: uppercase;
++   position: sticky;
++   top: 0;
++   z-index: 2;
+++  backdrop-filter: blur(10px);
++ }
++-
++-#scheduleList li.class-item {
++-  background: white;
+++/* Highlight ngΓö£├íy hΓö£Γöñm nay */
+++.schedule-list li.day-today {
+++  background: rgba(40, 167, 69, 0.15);
+++  color: #1a6b32;
+++  border-left: 3px solid #28a745;
+++}
+++.schedule-list li.class-item {
+++  background: rgba(255,255,255,0.6);
+++  backdrop-filter: blur(10px);
++   margin-bottom: 8px;
++-  padding: 10px;
++-  border-radius: 6px;
++-  border-left: 4px solid #0056b3;
++-  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+++  padding: 12px;
+++  border-radius: 8px;
+++  border-left: 4px solid #5c6bc0;
+++  box-shadow: 0 2px 4px rgba(0,0,0,0.02);
++   font-size: 13px;
+++  color: #333;
+++}
+++.schedule-list li.class-today {
+++  border-left-color: #28a745;
+++  background: rgba(240, 255, 244, 0.8);
++ }
++ .time-badge {
++   display: inline-block;
++   background: #e9ecef;
++-  padding: 3px 8px;
++-  border-radius: 12px;
+++  padding: 4px 8px;
+++  border-radius: 4px;
++   font-weight: 700;
++   font-size: 12px;
++   margin-right: 8px;
++   color: #495057;
++ }
+++.live-class-card {
+++  padding: 15px;
+++  margin-bottom: 15px;
+++  border: 1px solid #ff4d4f;
+++  background: rgba(255, 241, 240, 0.8);
+++}
+++.live-header { display: flex; align-items: center; margin-bottom: 8px; }
+++.live-badge {
+++  background: #ff4d4f; color: white; padding: 3px 8px; border-radius: 4px; font-size: 10px; font-weight: 700; animation: pulse 1s infinite;
+++}
+++.live-className { font-size: 15px; color: #cf1322; }
+++.empty-state { text-align: center; color: #888; font-size: 13px; padding: 20px; font-style: italic; }
++ 
++-.empty-state {
++-  color: #6c757d;
++-  font-style: italic;
++-  text-align: center;
+++/* Tab 3 - Settings */
+++.settings-desc { font-size: 12px; color: #555; margin: 0 0 10px 0; line-height: 1.4; }
+++.offset-form { display: flex; gap: 8px; }
+++.offset-form input {
+++  padding: 8px 12px;
+++  border: 1px solid rgba(0,0,0,0.1);
+++  border-radius: 6px;
+++  background: rgba(255,255,255,0.7);
+++  font-size: 13px;
+++  outline: none;
++ }
+++#teacherInput { flex: 2; min-width: 0; }
+++#offsetInput { flex: 1; max-width: 60px; text-align: center; }
+++.offset-form .btn-primary { width: 40px; border-radius: 6px; padding: 8px; background: #5c6bc0; font-size: 16px; box-shadow: 0 2px 8px rgba(92,107,192,0.3); }
++ 
++-.btn-success {
++-  background-color: #28a745 !important;
++-  color: white !important;
++-  border-color: #28a745 !important;
+++.teacher-scroll-area {
+++  flex: 1;
+++  max-height: 180px;
+++  overflow-y: auto;
+++  background: rgba(255,255,255,0.4);
+++  border-radius: 8px;
+++  padding: 5px;
+++}
+++.teacher-scroll-area::-webkit-scrollbar { width: 4px; }
+++.teacher-scroll-area::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.15); border-radius: 10px; }
+++.teacher-list { list-style: none; padding: 0; margin: 0; }
+++.teacher-list li {
+++  display: flex;
+++  justify-content: space-between;
+++  align-items: center;
+++  background: white;
+++  padding: 10px;
+++  margin-bottom: 5px;
+++  border-radius: 6px;
+++  font-size: 13px;
+++  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+++}
+++.teacher-name { font-weight: 600; color: #333; }
+++.teacher-offset { 
+++  background: #f0f2f5; padding: 3px 8px; border-radius: 10px; font-size: 12px; font-weight: 700; color: #0056b3; 
+++}
+++.btn-delete {
+++  background: #ffe3e3; color: #ff6b6b; border: none; width: 24px; height: 24px; border-radius: 4px; cursor: pointer; display: flex; align-items: center; justify-content: center;
++ }
++ 
++-.credit {
++-  text-align: center;
++-  margin-top: 15px;
++-  font-size: 11px;
+++/* Bottom Navigation */
+++.bottom-nav {
+++  display: flex;
+++  background: rgba(255, 255, 255, 0.85);
+++  backdrop-filter: blur(15px);
+++  border-top: 1px solid rgba(0,0,0,0.05);
+++  margin-top: auto;
+++  height: 60px;
+++}
+++.nav-item {
+++  flex: 1;
+++  background: transparent;
+++  border: none;
+++  display: flex;
+++  flex-direction: column;
+++  justify-content: center;
+++  align-items: center;
++   color: #888;
++-  font-weight: 500;
++-  letter-spacing: 0.5px;
+++  cursor: pointer;
+++  transition: color 0.2s;
+++}
+++.nav-item svg { width: 24px; height: 24px; margin-bottom: 4px; }
+++.nav-item span { font-size: 10px; font-weight: 600; }
+++.nav-item:hover { color: #5c6bc0; }
+++.nav-item.active { color: #5c6bc0; }
+++
+++/* Tab 4 - Notifications */
+++.notification-scroll-area {
+++  max-height: 380px;
+++  overflow-y: auto;
+++  padding-right: 5px;
+++}
+++.notification-scroll-area::-webkit-scrollbar { width: 4px; }
+++.notification-scroll-area::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.15); border-radius: 10px; }
+++
+++.notification-list {
+++  list-style: none;
+++  padding: 0;
+++  margin: 0;
+++  display: flex;
+++  flex-direction: column;
+++  gap: 10px;
+++}
+++
+++.notif-item {
+++  background: var(--glass-bg, rgba(255,255,255,0.6));
+++  border: 1px solid rgba(255,255,255,0.5);
+++  border-radius: 10px;
+++  padding: 12px;
+++  backdrop-filter: blur(10px);
+++  -webkit-backdrop-filter: blur(10px);
+++  box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+++}
+++
+++.notif-header {
+++  display: flex;
+++  justify-content: space-between;
+++  align-items: center;
+++  margin-bottom: 6px;
+++}
+++
+++.notif-title {
+++  font-weight: 700;
+++  color: #1a237e;
+++  font-size: 13px;
+++}
+++
+++.notif-time {
+++  font-size: 11px;
+++  color: #777;
+++  font-weight: 600;
+++}
+++
+++.notif-message {
+++  font-size: 13px;
+++  color: #444;
+++  line-height: 1.4;
+++  word-wrap: break-word;
++ }
++diff --git a/popup.html b/popup.html
++index 62c4f2d..4da0d31 100644
++--- a/popup.html
+++++ b/popup.html
++@@ -1,89 +1,160 @@
++ <!DOCTYPE html>
++ <html lang="vi">
+++
++ <head>
++-  <meta charset="UTF-8">
++-  <title>UIT Assistant Setup</title>
++-  <link rel="stylesheet" href="popup.css">
+++   <meta charset="UTF-8">
+++   <title>UIT Assistant - Premium</title>
+++   <link rel="stylesheet" href="popup.css">
++ </head>
+++
++ <body>
++-  <div class="header">
++-    <img src="icon128.png" alt="Logo" class="logo">
++-    <h1>UIT ASSISTANT v1.9</h1>
++-  </div>
++-
++-  <!-- Box tr├ƒΓòæ├¡ng thΓö£├¡i bot -->
++-  <div class="status-box" id="statusBox">
++-    <div class="status-indicator"></div>
++-    <span id="statusText">Tr├ƒΓòæ├¡ng thΓö£├¡i: ΓöÇ├ëang load...</span>
++-  </div>
++-
++-  <hr>
++-
++-  <!-- Setup Wizard -->
++-  <div class="wizard">
++-    <h3>╬ô├£├ûΓê⌐Γòò├à Setup Nhanh (3 BΓò₧Γûæ├ƒΓòù┬óc)</h3>
++-    <p class="subtitle">HoΓö£├ín thΓö£├ính ΓöÇ├ª├ƒΓòù├ó Bot t├ƒΓòùΓûÆ ΓöÇ├ª├ƒΓòù├ûng lΓö£├ím vi├ƒΓòù├ºc</p>
++-    
++-    <div class="step" id="step1">
++-      <div class="step-icon">1Γê⌐Γòò├à╬ô├ó├║</div>
++-      <div class="step-content">
++-        <label>ΓöÇ├ëΓöÇ├óng nh├ƒΓòæ┬íp Portal CITD</label>
++-        <button id="btnLoginPortal" class="action-btn">M├ƒΓòù╞Æ C├ƒΓòù├▓ng Sinh ViΓö£┬¼n</button>
+++   <!-- N├ƒΓòù├╝n trang trΓö£┬í -->
+++   <div class="glass-bg-shape shape-1"></div>
+++   <div class="glass-bg-shape shape-2"></div>
+++
+++   <!-- Header -->
+++   <header class="app-header">
+++      <img src="icon128.png" alt="Logo" class="logo">
+++      <div class="header-text">
+++         <h1>UIT Assistant</h1>
+++         <span>Smart Bot v2.0</span>
++       </div>
++-    </div>
+++   </header>
+++
+++   <!-- Content Khu V├ƒΓòùΓûÆc -->
+++   <main class="content-area">
+++
+++      <!-- TAB 1: HOME -->
+++      <div id="tab-home" class="tab-pane active">
+++         <!-- Tr├ƒΓòæ├¡ng thΓö£├¡i -->
+++         <div class="status-card glass-panel">
+++            <div class="status-indicator"></div>
+++            <div class="status-info">
+++               <span class="status-label">TR├ƒΓòæ├íNG THΓö£├╝I H├ƒΓòù├Ñ TH├ƒΓòù├ëNG</span>
+++               <strong id="statusText">╬ô├àΓöé ΓöÇ├ëang t├ƒΓòæ├║i...</strong>
+++            </div>
+++         </div>
++ 
++-    <div class="step" id="step2">
++-      <div class="step-icon">2Γê⌐Γòò├à╬ô├ó├║</div>
++-      <div class="step-content">
++-        <label>ΓöÇ├ë├ƒΓòù├┤ng B├ƒΓòù├û L├ƒΓòù├»ch H├ƒΓòù├¼c</label>
++-        <button id="btnSyncTKB" class="action-btn highlight">QuΓö£ΓîÉt L├ƒΓòù├»ch Ngay</button>
+++         <!-- Hero Action (Quan tr├ƒΓòù├¼ng nh├ƒΓòæ├æt) -->
+++         <div class="hero-action glass-panel border-glow">
+++            <div class="hero-header">
+++               <div class="hero-icon">Γëí╞Æ├▒├╗</div>
+++               <div class="hero-text">
+++                  <h3>T├ƒΓòùΓûÆ ΓöÇ├ë├ƒΓòù├ûng VΓö£├ío L├ƒΓòù┬óp</h3>
+++                  <p>Bot s├ƒΓòæΓò£ t├ƒΓòùΓûÆ nh├ƒΓòæ├║y vΓö£├ío l├ƒΓòù┬óp khi ΓöÇ├ª├ƒΓòæΓöÉn gi├ƒΓòù┬Ñ</p>
+++               </div>
+++            </div>
+++            <button id="btnAutoTeams" class="btn-primary glow-btn">KΓö£┬ích Ho├ƒΓòæ├¡t Auto-Join</button>
+++         </div>
+++
+++         <!-- Quick Actions -->
+++         <h4 class="section-title">L├ƒΓòù├ëI T├ƒΓòæ┬½T NHANH</h4>
+++         <div class="grid-actions">
+++            <button id="btnLoginPortal" class="action-btn">
+++               <span class="btn-icon">Γëí╞Æ├╢├╣</span>
+++               <span>Portal CΓöÇ├ë</span>
+++            </button>
+++            <button id="btnSyncTKB" class="action-btn">
+++               <span class="btn-icon">Γëí╞Æ├╢├ñ</span>
+++               <span>ΓöÇ├ë├ƒΓòù├┤ng B├ƒΓòù├û TKB</span>
+++            </button>
+++            <button id="btnOpenTeams" class="action-btn">
+++               <span class="btn-icon">Γëí╞Æ├å┬╝</span>
+++               <span>M├ƒΓòù╞Æ Teams</span>
+++            </button>
+++            <button id="btnOpenDashboard" class="action-btn">
+++               <span class="btn-icon">Γëí╞Æ├╗├æΓê⌐Γòò├à</span>
+++               <span>Dashboard</span>
+++            </button>
+++         </div>
++       </div>
++-    </div>
++ 
++-    <div class="step" id="step3">
++-      <div class="step-icon">3Γê⌐Γòò├à╬ô├ó├║</div>
++-      <div class="step-content">
++-        <label>M├ƒΓòù╞Æ Tab MS Teams</label>
++-        <button id="btnOpenTeams" class="action-btn">M├ƒΓòù╞Æ MS Teams</button>
+++      <!-- TAB 2: SCHEDULE -->
+++      <div id="tab-schedule" class="tab-pane">
+++         <h4 class="section-title">L├ƒΓòù├¿CH H├ƒΓòù├«C TU├ƒΓòæ┬¬N NΓö£├çY</h4>
+++
+++         <div id="active-link-container" class="live-class-card glass-panel" style="display: none;">
+++            <div class="live-header">
+++               <span class="live-badge">Γëí╞Æ├╢Γöñ ΓöÇ├ëANG DI├ƒΓòù├ñN RA</span>
+++            </div>
+++            <b id="meeting-className" class="live-className">MΓö£Γöñn h├ƒΓòù├¼c</b>
+++            <button id="btnOpenMeeting" class="btn-success mt-2">Γëí╞Æ├ä├æ VΓö£├ío L├ƒΓòù┬óp Ngay</button>
+++         </div>
+++
+++         <div class="schedule-scroll-area">
+++            <ul id="scheduleList" class="schedule-list">
+++               <li class="empty-state">ChΓò₧Γûæa ΓöÇ├ª├ƒΓòù├┤ng b├ƒΓòù├û l├ƒΓòù├»ch h├ƒΓòù├¼c...</li>
+++            </ul>
+++         </div>
++       </div>
++-    </div>
++-
++-    <!-- V1.9 Auto Macro Step -->
++-    <div class="step" id="step4">
++-      <div class="step-icon">4Γê⌐Γòò├à╬ô├ó├║</div>
++-      <div class="step-content">
++-        <label>B├ƒΓòæ┬ít C├ƒΓòæ├║nh BΓö£├¡o All MΓö£Γöñn</label>
++-        <button id="btnAutoTeams" class="action-btn highlight">CΓö£├íi Auto-Notify</button>
+++
+++      <!-- TAB 3: SETTINGS -->
+++      <div id="tab-settings" class="tab-pane">
+++         <h4 class="section-title">TU├ƒΓòùΓûô CH├ƒΓòù├¬NH GI├ƒΓòù┬ú GI├ƒΓòæ├│NG VIΓö£├¿N</h4>
+++         <div class="glass-panel" style="padding: 12px; margin-bottom: 15px;">
+++            <p class="settings-desc">N├ƒΓòæΓöÉu GV thΓò₧Γûæ├ƒΓòù┬Ñng xuyΓö£┬¼n vΓö£├ío tr├ƒΓòù├á, hΓö£├║y nh├ƒΓòæ┬íp s├ƒΓòù├ª phΓö£Γòæt tr├ƒΓòù├á (VD: <b>15</b>). N├ƒΓòæΓöÉu vΓö£├ío s├ƒΓòù┬óm,
+++               nh├ƒΓòæ┬íp s├ƒΓòù├ª Γö£├│m (VD: <b>-5</b>).</p>
+++
+++            <div class="offset-form mt-2">
+++               <input type="text" id="teacherInput" placeholder="TΓö£┬¼n GV (VD: Nguyen A)" autocomplete="off">
+++               <input type="number" id="offsetInput" placeholder="PhΓö£Γòæt (Γö¼ΓûÆ)">
+++               <button id="btnSaveOffset" class="btn-primary">+</button>
+++            </div>
+++         </div>
+++
+++         <h4 class="section-title">DANH SΓö£├╝CH ΓöÇ├ëΓö£├ó LΓò₧┬╗U</h4>
+++         <div class="teacher-scroll-area">
+++            <ul class="teacher-list" id="teacherList">
+++               <!-- Injected JS -->
+++            </ul>
+++         </div>
+++      </div>
+++
+++      <!-- TAB 4: NOTIFICATIONS -->
+++      <div id="tab-notifications" class="tab-pane">
+++         <h4 class="section-title">NH├ƒΓòæ┬╝T KΓö£┬Ñ BOT (24H QUA)</h4>
+++         <div class="notification-scroll-area">
+++            <ul class="notification-list" id="notificationList">
+++               <li class="empty-state">ChΓò₧Γûæa cΓö£Γöé thΓö£Γöñng bΓö£├¡o nΓö£├ío...</li>
+++            </ul>
+++         </div>
++       </div>
++-    </div>
++-  </div>
++-
++-  <hr>
++-
++-  <!-- Box l├ƒΓòù├»ch h├ƒΓòù├¼c -->
++-  <div class="card" id="schedule-box">
++-    <h4><span class="icon">Γëí╞Æ├┤├£</span> L├ƒΓòù├»ch H├ƒΓòù├¼c HΓö£Γöñm Nay</h4>
++-    <!-- V1.9: NΓö£Γòæt M├ƒΓòù╞Æ Nhanh Link (Video Icon) N├ƒΓòæΓöÉu ΓöÇ├ëΓö£├║ CΓö£Γöé Link -->
++-    <div id="active-link-container" style="display: none; padding-bottom: 12px; border-bottom: 1px dashed #e0e0e0; margin-bottom: 10px;">
++-       <button id="btnOpenMeeting" class="btn btn-success" style="width: 100%; font-size: 13px; font-weight: 600; padding: 10px; background-color: #28a745; display: flex; align-items: center; justify-content: center; gap: 8px;">
++-          <span style="font-size: 16px;">Γëí╞Æ├ä├æ</span> <span>VΓö£├ío L├ƒΓòù┬óp: <b id="meeting-className"></b></span>
++-       </button>
++-       <div style="font-size: 10px; color: #666; text-align: center; margin-top: 4px;">Tham gia b├ƒΓòæΓûÆng Link MS Teams lΓö£Γòæc nΓö£├║y</div>
++-    </div>
++-    
++-    <ul class="schedule-list" id="scheduleList">
++-      <li class="empty-state">ΓöÇ├ëang t├ƒΓòæ├║i l├ƒΓòù├»ch...</li>
++-    </ul>
++-  </div>
++-
++-  <div class="credit" style="text-align: center;">
++-    ╬ô┬ú┬┐ Designed with ╬ô┬Ñ├▒Γê⌐Γòò├à by <a href="http://zalo.me/0834422439" target="_blank" style="color: #0056b3; font-weight: bold; text-decoration: none;">Hungpixi</a>
++-    <div style="font-size: 11px; color: #777; margin-top: 6px; font-weight: normal;">
++-      ╬ô├┐├▓ N├ƒΓòæΓöÉu tool xΓö£├íi ├ƒΓòù├▓n, em xin 5-10k ki├ƒΓòæΓöÉm cΓò₧├¡m duy trΓö£┬╝ phΓö£├¡t tri├ƒΓòù├ón qua Momo: <b style="color: #a50064; user-select: all;">0834422439</b> nhΓö£ΓîÉ!
++-    </div>
++-  </div>
++-
++-  <script src="schedule-logic.js"></script>
++-  <script src="popup.js"></script>
+++
+++   </main>
+++
+++   <!-- BOTTOM NAVIGATION -->
+++   <nav class="bottom-nav">
+++      <button class="nav-item active" data-tab="tab-home">
+++         <svg fill="currentColor" viewBox="0 0 24 24">
+++            <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z" />
+++         </svg>
+++         <span>Trang ch├ƒΓòù┬║</span>
+++      </button>
+++      <button class="nav-item" data-tab="tab-schedule">
+++         <svg fill="currentColor" viewBox="0 0 24 24">
+++            <path
+++               d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11z" />
+++         </svg>
+++         <span>L├ƒΓòù├»ch h├ƒΓòù├¼c</span>
+++      </button>
+++      <button class="nav-item" data-tab="tab-settings">
+++         <svg fill="currentColor" viewBox="0 0 24 24">
+++            <path
+++               d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.06-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.06.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .43-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.49-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z" />
+++         </svg>
+++         <span>C├ƒΓòæ├æu hΓö£┬╝nh</span>
+++      </button>
+++      <button class="nav-item" data-tab="tab-notifications">
+++         <svg fill="currentColor" viewBox="0 0 24 24">
+++            <path
+++               d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2zm-2 1H8v-6c0-2.48 1.51-4.5 4-4.5s4 2.02 4 4.5v6z" />
+++         </svg>
+++         <span>Nh├ƒΓòæ┬ít kΓö£Γò£</span>
+++      </button>
+++   </nav>
+++
+++   <script src="schedule-logic.js"></script>
+++   <script src="popup.js"></script>
++ </body>
++-</html>
+++
+++</html>
++\ No newline at end of file
++diff --git a/popup.js b/popup.js
++index 8f88b00..bc2f8c1 100644
++--- a/popup.js
+++++ b/popup.js
++@@ -1,124 +1,234 @@
++ document.addEventListener('DOMContentLoaded', () => {
++-  const statusBox = document.getElementById('statusBox');
+++  // ELEMENTS
++   const statusIndicator = document.querySelector('.status-indicator');
++   const statusText = document.getElementById('statusText');
++-  const scheduleList = document.getElementById('scheduleList');
++   
+++  const scheduleList = document.getElementById('scheduleList');
+++  const activeLinkContainer = document.getElementById('active-link-container');
+++  const meetingClassName = document.getElementById('meeting-className');
+++  const btnOpenMeeting = document.getElementById('btnOpenMeeting');
+++
+++  // ACTIONS
++   const btnLoginPortal = document.getElementById('btnLoginPortal');
++   const btnSyncTKB = document.getElementById('btnSyncTKB');
++   const btnOpenTeams = document.getElementById('btnOpenTeams');
++   const btnAutoTeams = document.getElementById('btnAutoTeams');
+++  const btnOpenDashboard = document.getElementById('btnOpenDashboard');
++ 
++-  const activeLinkContainer = document.getElementById('active-link-container');
++-  const btnOpenMeeting = document.getElementById('btnOpenMeeting');
++-  const meetingClassName = document.getElementById('meeting-className');
+++  // TABS LOGIC
+++  const navItems = document.querySelectorAll('.nav-item');
+++  const tabPanes = document.querySelectorAll('.tab-pane');
+++  
+++  navItems.forEach(nav => {
+++    nav.addEventListener('click', () => {
+++       const target = nav.dataset.tab;
+++       // Reset active
+++       navItems.forEach(n => n.classList.remove('active'));
+++       tabPanes.forEach(p => p.classList.remove('active'));
+++       
+++       // Set active
+++       nav.classList.add('active');
+++       document.getElementById(target).classList.add('active');
+++    });
+++  });
++ 
++-  // Load Status
+++  // ======= HOME TAB LOGIC ======= //
+++  // 1. Get Status
++   chrome.runtime.sendMessage({ type: "GET_STATE" }, (res) => {
++-    if (!res) {
++-      statusText.textContent = "ChΓò₧Γûæa k├ƒΓòæΓöÉt n├ƒΓòù├ªi Background";
++-      statusIndicator.className = "status-indicator";
++-      return;
++-    }
++-    const st = res.state;
++-    statusIndicator.className = "status-indicator";
++-    if (st === "IDLE") {
+++    if (!res) return;
+++    if (statusIndicator) statusIndicator.className = "status-indicator";
+++    if (res.state === "IDLE") {
++       statusIndicator.classList.add("idle");
++-      statusText.innerHTML = "Γëí╞Æ├å├▒ <b>ΓöÇ├ëang ng├ƒΓòù┬║</b> (Ch├ƒΓòù┬Ñ TKB)";
++-    } else if (st === "PRE_CLASS") {
+++      statusText.innerHTML = "Γëí╞Æ├å├▒ ΓöÇ├ëang ng├ƒΓòù┬║ (Ch├ƒΓòù┬Ñ TKB)";
+++    } else if (res.state === "PRE_CLASS") {
++       statusIndicator.classList.add("pre");
++-      statusText.innerHTML = "╬ô├àΓöé <b>Chu├ƒΓòæΓîÉn b├ƒΓòù├» h├ƒΓòù├¼c</b> (ΓöÇ├ë├ƒΓòù├║i 30p)";
++-    } else if (st === "WATCHING") {
+++      statusText.innerHTML = "╬ô├àΓöé Chu├ƒΓòæΓîÉn b├ƒΓòù├» h├ƒΓòù├¼c (ΓöÇ├ë├ƒΓòù├║i 30p)";
+++    } else if (res.state === "WATCHING") {
++       statusIndicator.classList.add("watching");
++-      statusText.innerHTML = "Γëí╞Æ├╢Γöñ <b>ΓöÇ├ëang quΓö£ΓîÉt Teams</b>";
++-    } else if (st === "CLASS_DETECTED") {
+++      statusText.innerHTML = "Γëí╞Æ├╢Γöñ ΓöÇ├ëang quΓö£ΓîÉt Teams";
+++    } else if (res.state === "CLASS_DETECTED") {
++       statusIndicator.classList.add("detected");
++-      statusText.innerHTML = "╬ô┬ú├á <b>ΓöÇ├ëΓö£├║ phΓö£├¡t hi├ƒΓòù├ºn Link!</b>";
+++      statusText.innerHTML = "╬ô┬ú├á ΓöÇ├ëΓö£├║ phΓö£├¡t hi├ƒΓòù├ºn Link!";
++     }
++   });
++ 
++-  // Load Schedule & Meeting Link
+++  // 2. Button Check (Portal, Teams, Sync)
+++  chrome.runtime.sendMessage({ type: "CHECK_LOGINS" }, (res) => {
+++    if (res && res.citdLogin) {
+++      btnLoginPortal.classList.add("btn-active-success");
+++      btnLoginPortal.innerHTML = "╬ô┬ú├á Portal CΓöÇ├ë";
+++    }
+++    if (res && res.teamsLogin) {
+++      btnOpenTeams.classList.add("btn-active-success");
+++      btnOpenTeams.innerHTML = "╬ô┬ú├á MS Teams";
+++    }
+++  });
+++
+++  // ======= ACTIONS ======= //
+++  btnLoginPortal.addEventListener('click', () => chrome.tabs.create({ url: "https://student.citd.edu.vn/signin" }));
+++  btnSyncTKB.addEventListener('click', () => chrome.tabs.create({ url: "https://student.citd.edu.vn/projects" }));
+++  btnOpenTeams.addEventListener('click', () => chrome.tabs.create({ url: "https://teams.cloud.microsoft" }));
+++  btnOpenDashboard.addEventListener('click', () => {
+++    chrome.tabs.create({ url: chrome.runtime.getURL('dashboard.html') });
+++  });
+++  
+++  if (btnAutoTeams) {
+++    btnAutoTeams.addEventListener('click', () => {
+++      chrome.tabs.query({ url: ["*://teams.cloud.microsoft/*", "*://teams.microsoft.com/*"] }, (tabs) => {
+++        if (tabs && tabs.length > 0 && tabs[0].id) {
+++          chrome.tabs.sendMessage(tabs[0].id, { type: "RUN_MACRO", target: "teams" }, (res) => {
+++             if (chrome.runtime.lastError) {
+++               console.warn("Error sending message to tab:", chrome.runtime.lastError.message);
+++               return;
+++             }
+++             if (res && res.status === "started") {
+++               btnAutoTeams.innerHTML = "╬ô┬ú├á ΓöÇ├ëang Ch├ƒΓòæ├¡y Macro...";
+++               btnAutoTeams.style.background = "#fff";
+++               btnAutoTeams.style.color = "#28a745";
+++               btnAutoTeams.style.pointerEvents = "none";
+++             }
+++          });
+++        } else {
+++          alert("Γëí╞Æ├£┬┐ B├ƒΓòæ├¡n chΓò₧Γûæa m├ƒΓòù╞Æ tab Teams! M├ƒΓòù╞Æ Teams trΓò₧Γûæ├ƒΓòù┬óc khi KΓö£┬ích Ho├ƒΓòæ├¡t Auto-Join.");
+++        }
+++      });
+++    });
+++  }
+++
+++  // ======= SCHEDULE TAB LOGIC ======= //
++   chrome.storage.local.get(["schedule", "lastMeetingLink", "lastMeetingClass", "lastMeetingTime"], (data) => {
++-    // 1. Render Schedule
++-    renderScheduleList(data.schedule || [], scheduleList, btnSyncTKB);
+++    // Render Schedule using schedule-logic.js
+++    if (typeof renderScheduleList === 'function' && scheduleList) {
+++      renderScheduleList(data.schedule || [], scheduleList, btnSyncTKB);
+++    }
++ 
++-    // 2. Hi├ƒΓòù├ón th├ƒΓòù├» nΓö£Γòæt VΓö£├çO L├ƒΓòù├£P (N├ƒΓòæΓöÉu ΓöÇ├ªang cΓö£Γöé link b├ƒΓòæ┬╗t ΓöÇ├ªΓò₧Γûæ├ƒΓòù├║c)
+++    // Active Link Detection
++     if (data.lastMeetingLink && data.lastMeetingTime) {
++       const hoursSince = (Date.now() - data.lastMeetingTime) / (1000 * 60 * 60);
++       if (hoursSince < 4) {
++-        activeLinkContainer.style.display = 'block';
++-        meetingClassName.textContent = data.lastMeetingClass || "L├ƒΓòù┬óp h├ƒΓòù├¼c";
++-        btnOpenMeeting.onclick = () => {
++-           chrome.tabs.create({ url: data.lastMeetingLink, active: true }, (tab) => {
++-             if (chrome.runtime.lastError) {}
++-           });
++-        };
+++        if (activeLinkContainer) activeLinkContainer.style.display = 'block';
+++        if (meetingClassName) meetingClassName.textContent = data.lastMeetingClass || "L├ƒΓòù┬óp ΓöÇ├ëang H├ƒΓòù├¼p";
+++        if (btnOpenMeeting) btnOpenMeeting.onclick = () => chrome.tabs.create({ url: data.lastMeetingLink, active: true });
++       }
++     }
++   });
++ 
++-  // ╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç
++-  // V1.8: SMART CHECKLIST (QUΓö£├½T ΓöÇ├ëΓöÇ├⌐NG NH├ƒΓòæ┬╝P)
++-  // ╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç
++-  chrome.runtime.sendMessage({ type: "CHECK_LOGINS" }, (res) => {
++-    if (res && res.citdLogin) {
++-      btnLoginPortal.innerHTML = "╬ô┬ú├á ΓöÇ├ëΓö£├║ ΓöÇ├ëΓöÇ├óng Nh├ƒΓòæ┬íp CITD";
++-      btnLoginPortal.classList.add("btn-success");
++-      btnLoginPortal.style.pointerEvents = "none"; // KhΓö£Γöñng c├ƒΓòæ┬║n b├ƒΓòæ├æm n├ƒΓòù┬╗a
++-    }
++-    if (res && res.teamsLogin) {
++-      btnOpenTeams.innerHTML = "╬ô┬ú├á ΓöÇ├ëΓö£├║ ΓöÇ├ëΓöÇ├óng Nh├ƒΓòæ┬íp Teams";
++-      btnOpenTeams.classList.add("btn-success");
++-      btnOpenTeams.style.pointerEvents = "none"; // KhΓö£Γöñng c├ƒΓòæ┬║n b├ƒΓòæ├æm n├ƒΓòù┬╗a
++-    }
++-  });
+++  // ======= SETTINGS TAB LOGIC ======= //
+++  const teacherInput = document.getElementById('teacherInput');
+++  const offsetInput = document.getElementById('offsetInput');
+++  const btnSaveOffset = document.getElementById('btnSaveOffset');
+++  const teacherListContainer = document.getElementById('teacherList');
++ 
++-  // Checklist Actions
++-  btnLoginPortal.addEventListener('click', () => {
++-    chrome.tabs.create({ url: "https://student.citd.edu.vn/signin" }, (tab) => {
++-      if (chrome.runtime.lastError) {}
++-    });
++-  });
+++  function renderTeacherOffsets() {
+++    chrome.storage.local.get("teacherConfigs", (data) => {
+++      const configs = data.teacherConfigs || {};
+++      if (teacherListContainer) teacherListContainer.innerHTML = "";
+++      
+++      const keys = Object.keys(configs);
+++      if (keys.length === 0) {
+++        if (teacherListContainer) teacherListContainer.innerHTML = "<li class='empty-state'>ChΓò₧Γûæa cΓö£Γöé tu├ƒΓòùΓöé ch├ƒΓòù├½nh nΓö£├ío...</li>";
+++        return;
+++      }
++ 
++-  btnSyncTKB.addEventListener('click', () => {
++-    chrome.tabs.create({ url: "https://student.citd.edu.vn/projects" }, (tab) => {
++-      if (chrome.runtime.lastError) {}
++-    });
++-  });
+++      keys.forEach(teacher => {
+++        const tr = document.createElement("li");
++ 
++-  btnOpenTeams.addEventListener('click', () => {
++-    chrome.tabs.create({ url: "https://teams.cloud.microsoft" }, (tab) => {
++-      if (chrome.runtime.lastError) {}
+++        const info = document.createElement("div");
+++        const nameSpan = document.createElement("span");
+++        nameSpan.className = "teacher-name";
+++        nameSpan.textContent = teacher;
+++        const offsetSpan = document.createElement("span");
+++        offsetSpan.className = "teacher-offset";
+++        const offset = configs[teacher].offset;
+++        offsetSpan.textContent = `${offset > 0 ? '+' + offset : offset} phΓö£Γòæt`;
+++        info.appendChild(nameSpan);
+++        info.appendChild(document.createTextNode(" "));
+++        info.appendChild(offsetSpan);
+++        
+++        const btnDelete = document.createElement("button");
+++        btnDelete.className = "btn-delete";
+++        btnDelete.innerText = "╬ô┬ú├▓";
+++        btnDelete.onclick = () => {
+++          delete configs[teacher];
+++          chrome.storage.local.set({ teacherConfigs: configs }, () => {
+++            renderTeacherOffsets(); // Re-render
+++          });
+++        };
+++        
+++        tr.appendChild(info);
+++        tr.appendChild(btnDelete);
+++        if (teacherListContainer) teacherListContainer.appendChild(tr);
+++      });
++     });
++-  });
+++  }
++ 
++-  // V1.9 B├ƒΓòæ├æm nΓö£Γòæt t├ƒΓòù┬╜ Popup -> G├ƒΓòù├¼i th├ƒΓòæΓöéng content script c├ƒΓòù┬║a Teams (n├ƒΓòæΓöÉu ΓöÇ├ªang b├ƒΓòæ┬ít)
++-  btnAutoTeams.addEventListener('click', () => {
++-    chrome.tabs.query({ url: ["*://teams.cloud.microsoft/*", "*://teams.microsoft.com/*"] }, (tabs) => {
++-      if (chrome.runtime.lastError) {
++-        console.error(chrome.runtime.lastError);
+++  // Kh├ƒΓòù╞Æi ch├ƒΓòæ├¡y render list
+++  renderTeacherOffsets();
+++
+++  if (btnSaveOffset) {
+++    btnSaveOffset.addEventListener('click', () => {
+++      const tName = teacherInput.value.trim();
+++      const tOffset = parseInt(offsetInput.value);
+++      
+++      if (!tName || isNaN(tOffset)) {
+++        alert("Vui lΓö£Γûông ΓöÇ├ªi├ƒΓòù├╝n ΓöÇ├ª├ƒΓòù┬║ TΓö£┬¼n GiΓö£├¡o ViΓö£┬¼n vΓö£├í S├ƒΓòù├ª phΓö£Γòæt!");
++         return;
++       }
++-      
++-      if (tabs && tabs.length > 0 && tabs[0].id) {
++-        // Tab Teams ΓöÇ├ªΓö£├║ m├ƒΓòù╞Æ, nΓö£ΓîÉm mΓö£┬╝n WAKE UP MACRO xu├ƒΓòù├ªng
++-        chrome.tabs.sendMessage(tabs[0].id, { type: "RUN_MACRO", target: "teams" }, (res) => {
++-           if (chrome.runtime.lastError) {
++-             console.warn("[UIT] Popup to Teams channel failed.");
++-             return;
++-           }
++-           if (res && res.status === "started") {
++-             btnAutoTeams.innerHTML = "╬ô┬ú├á ΓöÇ├ëang Ch├ƒΓòæ├¡y Macro...";
++-             btnAutoTeams.classList.remove("highlight");
++-             btnAutoTeams.style.backgroundColor = "#28a745";
++-             btnAutoTeams.style.borderColor = "#28a745";
++-             btnAutoTeams.style.color = "white";
++-             btnAutoTeams.style.pointerEvents = "none";
++-           }
+++
+++      chrome.storage.local.get("teacherConfigs", (data) => {
+++        let configs = data.teacherConfigs || {};
+++        configs[tName] = { offset: tOffset };
+++        
+++        chrome.storage.local.set({ teacherConfigs: configs }, () => {
+++          teacherInput.value = "";
+++          offsetInput.value = "";
+++          renderTeacherOffsets();
++         });
++-      } else {
++-        alert("Γëí╞Æ├£┬┐ L├ƒΓòù├╣i: B├ƒΓòæ├¡n chΓò₧Γûæa m├ƒΓòù╞Æ Tab MS Teams nΓö£├ío c├ƒΓòæ├║! HΓö£├║y hoΓö£├ín thΓö£├ính BΓò₧Γûæ├ƒΓòù┬óc 3 (M├ƒΓòù╞Æ vΓö£├í ΓöÇ├ëΓöÇ├óng Nh├ƒΓòæ┬íp MS Teams) trΓò₧Γûæ├ƒΓòù┬óc khi kΓö£┬ích ho├ƒΓòæ├¡t Macro nhΓö£ΓîÉ.");
+++      });
+++    });
+++  }
+++
+++  // ======= NOTIFICATIONS TAB LOGIC ======= //
+++  const notificationList = document.getElementById('notificationList');
+++  function renderNotifications() {
+++    chrome.storage.local.get("notificationLogs", (data) => {
+++      const logs = data.notificationLogs || [];
+++      if (!notificationList) return;
+++      notificationList.innerHTML = "";
+++      
+++      if (logs.length === 0) {
+++        notificationList.innerHTML = '<li class="empty-state">ChΓò₧Γûæa cΓö£Γöé thΓö£Γöñng bΓö£├¡o nΓö£├ío...</li>';
+++        return;
++       }
+++
+++      logs.forEach(log => {
+++        const li = document.createElement("li");
+++        li.className = "notif-item";
+++
+++        // Format date/time
+++        const dateObj = new Date(log.timestamp);
+++        const timeStr = dateObj.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) + ' ' + dateObj.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' });
+++
+++        const header = document.createElement("div");
+++        header.className = "notif-header";
+++        const titleSpan = document.createElement("span");
+++        titleSpan.className = "notif-title";
+++        titleSpan.textContent = log.title;
+++        const timeSpan = document.createElement("span");
+++        timeSpan.className = "notif-time";
+++        timeSpan.textContent = timeStr;
+++        header.appendChild(titleSpan);
+++        header.appendChild(timeSpan);
+++        const msgDiv = document.createElement("div");
+++        msgDiv.className = "notif-message";
+++        msgDiv.textContent = log.message;
+++        li.appendChild(header);
+++        li.appendChild(msgDiv);
+++        notificationList.appendChild(li);
+++      });
++     });
++-  });
+++  }
+++
+++  // G├ƒΓòù├¼i ΓöÇ├ª├ƒΓòù├ó render l├ƒΓòæ┬║n ΓöÇ├ª├ƒΓòæ┬║u lΓö£Γòæc popup m├ƒΓòù╞Æ
+++  renderNotifications();
++ });
++diff --git a/schedule-logic.js b/schedule-logic.js
++index f65a07b..2080f93 100644
++--- a/schedule-logic.js
+++++ b/schedule-logic.js
++@@ -1,55 +1,80 @@
++ /**
++- * HΓö£├ím render danh sΓö£├¡ch l├ƒΓòù├»ch h├ƒΓòù├¼c (DΓö£Γòúng chung cho Popup vΓö£├í Unit Test)
+++ * Render danh sΓö£├¡ch l├ƒΓòù├»ch h├ƒΓòù├¼c theo tu├ƒΓòæ┬║n.
+++ * DΓö£Γòúng chung cho Popup, Dashboard, vΓö£├í Unit Test.
+++ * Highlight ngΓö£├íy hΓö£Γöñm nay ΓöÇ├ª├ƒΓòù├ó d├ƒΓòù├á nhΓö£┬╝n.
++  */
++ function renderScheduleList(list, scheduleList, btnSyncTKB) {
++   if (list.length === 0) {
++     scheduleList.innerHTML = `<li class="empty-state">HΓö£Γöñm nay r├ƒΓòæ├║nh rang! KhΓö£Γöñng cΓö£Γöé l├ƒΓòù┬óp nΓö£├ío.</li>`;
++     if (btnSyncTKB) btnSyncTKB.textContent = "QuΓö£ΓîÉt L├ƒΓòù├»ch Ngay";
++-  } else {
++-    if (btnSyncTKB) {
++-      btnSyncTKB.innerHTML = "╬ô┬ú├á ΓöÇ├ëΓö£├║ ΓöÇ├ë├ƒΓòù├┤ng B├ƒΓòù├û TKB";
++-      btnSyncTKB.classList.remove("highlight");
++-      btnSyncTKB.style.backgroundColor = "#28a745";
++-      btnSyncTKB.style.borderColor = "#28a745";
++-      btnSyncTKB.style.color = "white";
++-    }
++-
++-    // Render l├ƒΓòù├»ch h├ƒΓòù├¼c c├ƒΓòæ├║ tu├ƒΓòæ┬║n
++-    const dayOrder = ["Th├ƒΓòùΓîÉ 2", "Th├ƒΓòùΓîÉ 3", "Th├ƒΓòùΓîÉ 4", "Th├ƒΓòùΓîÉ 5", "Th├ƒΓòùΓîÉ 6", "Th├ƒΓòùΓîÉ 7", "Ch├ƒΓòù┬║ nh├ƒΓòæ┬ít"];
++-    const groupedSchedule = {};
++-    
++-    dayOrder.forEach(day => {
++-      groupedSchedule[day] = list.filter(item => item.day === day);
++-    });
+++    return;
+++  }
+++
+++  if (btnSyncTKB) {
+++    btnSyncTKB.innerHTML = "╬ô┬ú├á ΓöÇ├ëΓö£├║ ΓöÇ├ë├ƒΓòù├┤ng B├ƒΓòù├û TKB";
+++    btnSyncTKB.classList.remove("highlight");
+++    btnSyncTKB.style.backgroundColor = "#28a745";
+++    btnSyncTKB.style.borderColor = "#28a745";
+++    btnSyncTKB.style.color = "white";
+++  }
+++
+++  const dayOrder = ["Th├ƒΓòùΓîÉ 2", "Th├ƒΓòùΓîÉ 3", "Th├ƒΓòùΓîÉ 4", "Th├ƒΓòùΓîÉ 5", "Th├ƒΓòùΓîÉ 6", "Th├ƒΓòùΓîÉ 7", "Ch├ƒΓòù┬║ nh├ƒΓòæ┬ít"];
+++  const dayIndexMap = { "Th├ƒΓòùΓîÉ 2": 1, "Th├ƒΓòùΓîÉ 3": 2, "Th├ƒΓòùΓîÉ 4": 3, "Th├ƒΓòùΓîÉ 5": 4, "Th├ƒΓòùΓîÉ 6": 5, "Th├ƒΓòùΓîÉ 7": 6, "Ch├ƒΓòù┬║ nh├ƒΓòæ┬ít": 0 };
+++  const todayIndex = new Date().getDay();
+++
+++  const groupedSchedule = {};
+++  dayOrder.forEach(day => {
+++    groupedSchedule[day] = list.filter(item => item.day === day);
+++  });
+++
+++  scheduleList.innerHTML = "";
+++
+++  let hasAnyClass = false;
+++  dayOrder.forEach(day => {
+++    const dayClasses = groupedSchedule[day];
+++    if (dayClasses.length === 0) return;
+++
+++    hasAnyClass = true;
+++    const isToday = dayIndexMap[day] === todayIndex;
+++
+++    // TiΓö£┬¼u ΓöÇ├ª├ƒΓòù├╝ ngΓö£├íy ╬ô├ç├╢ highlight n├ƒΓòæΓöÉu lΓö£├í hΓö£Γöñm nay
+++    const dayHeader = document.createElement("li");
+++    dayHeader.className = isToday ? "day-header day-today" : "day-header";
+++    const headerIcon = document.createTextNode(isToday ? "Γëí╞Æ├┤├á " : "Γëí╞Æ├┤├á ");
+++    const headerStrong = document.createElement("strong");
+++    headerStrong.textContent = isToday ? `${day} ╬ô├ç├╢ HΓö£├╢M NAY` : day;
+++    dayHeader.appendChild(headerIcon);
+++    dayHeader.appendChild(headerStrong);
+++    scheduleList.appendChild(dayHeader);
+++
+++    dayClasses.forEach(item => {
+++      const li = document.createElement("li");
+++      li.className = isToday ? "class-item class-today" : "class-item";
+++
+++      // Fix XSS: dΓö£Γòúng DOM methods thay vΓö£┬╝ innerHTML
+++      const timeBadge = document.createElement("span");
+++      timeBadge.className = "time-badge";
+++      timeBadge.textContent = item.time;
+++
+++      const nameStrong = document.createElement("strong");
+++      const hasTitle = /^(ThS|TS|GS|PGS|GiΓö£├¡o viΓö£┬¼n)\.?\s/i.test(item.teacher);
+++      const teacherDisplay = hasTitle ? item.teacher : `GiΓö£├¡o viΓö£┬¼n ${item.teacher}`;
+++      nameStrong.textContent = item.name;
+++
+++      const teacherNode = document.createTextNode(`Γëí╞Æ├ª┬┐╬ô├ç├¼Γëí╞Æ├à┬╜ ${teacherDisplay}`);
+++
+++      li.appendChild(timeBadge);
+++      li.appendChild(document.createTextNode(" "));
+++      li.appendChild(nameStrong);
+++      li.appendChild(document.createElement("br"));
+++      li.appendChild(teacherNode);
++ 
++-    scheduleList.innerHTML = "";
++-    
++-    let hasAnyClass = false;
++-    dayOrder.forEach(day => {
++-      const dayClasses = groupedSchedule[day];
++-      if (dayClasses.length > 0) {
++-        hasAnyClass = true;
++-        // ThΓö£┬¼m tiΓö£┬¼u ΓöÇ├ª├ƒΓòù├╝ ngΓö£├íy
++-        const dayHeader = document.createElement("li");
++-        dayHeader.className = "day-header";
++-        dayHeader.innerHTML = `Γëí╞Æ├┤├á <strong>${day}</strong>`;
++-        scheduleList.appendChild(dayHeader);
++-
++-        dayClasses.forEach(item => {
++-          const li = document.createElement("li");
++-          li.className = "class-item";
++-          // V1.9: ThΓö£┬¼m ch├ƒΓòù┬╗ GiΓö£├¡o viΓö£┬¼n n├ƒΓòæΓöÉu chΓò₧Γûæa cΓö£Γöé ch├ƒΓòùΓîÉc danh (ThS, TS, GS, PGS...)
++-          const hasTitle = /^(ThS|TS|GS|PGS|GiΓö£├¡o viΓö£┬¼n)\.?\s/i.test(item.teacher);
++-          const teacherDisplay = hasTitle ? item.teacher : `GiΓö£├¡o viΓö£┬¼n ${item.teacher}`;
++-          li.innerHTML = `<span class="time-badge">${item.time}</span> <strong>${item.name}</strong><br>Γëí╞Æ├ª┬┐╬ô├ç├¼Γëí╞Æ├à┬╜ ${teacherDisplay}`;
++-          scheduleList.appendChild(li);
++-        });
++-      }
+++      scheduleList.appendChild(li);
++     });
+++  });
++ 
++-    if (!hasAnyClass) {
++-      scheduleList.innerHTML = `<li class="empty-state">Tu├ƒΓòæ┬║n nΓö£├íy r├ƒΓòæ├║nh rang! KhΓö£Γöñng cΓö£Γöé l├ƒΓòù┬óp nΓö£├ío.</li>`;
++-    }
+++  if (!hasAnyClass) {
+++    scheduleList.innerHTML = `<li class="empty-state">Tu├ƒΓòæ┬║n nΓö£├íy r├ƒΓòæ├║nh rang! KhΓö£Γöñng cΓö£Γöé l├ƒΓòù┬óp nΓö£├ío.</li>`;
++   }
++ }
++ 
+diff --git a/manifest.json b/manifest.json
+index ba31cf7..b172a85 100644
+--- a/manifest.json
++++ b/manifest.json
+@@ -1,7 +1,7 @@
+ {
+   "manifest_version": 3,
+   "name": "UIT Student Assistant",
+-  "version": "1.9",
++  "version": "2.0",
+   "description": "Tß╗▒ ─æß╗Öng theo d├╡i lß╗ïch hß╗ìc, tß╗▒ ─æß╗Öng Join Meeting v├á Bypass sß║únh Pre-join.",
+   "icons": {
+     "128": "icon128.png"
+@@ -28,6 +28,7 @@
+     "default_icon": "icon128.png",
+     "default_title": "UIT Assistant - Hungpixi"
+   },
++  "options_page": "dashboard.html",
+   "content_scripts": [
+     {
+       "matches": ["*://student.citd.edu.vn/projects*"],
+diff --git a/popup.css b/popup.css
+index dcafe86..7196a60 100644
+--- a/popup.css
++++ b/popup.css
+@@ -1,209 +1,425 @@
+ body {
+   width: 380px;
+-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
++  height: 560px;
+   margin: 0;
+-  padding: 15px;
+-  background-color: #f8f9fa;
++  padding: 0;
++  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
++  background: linear-gradient(135deg, #e0eafc 0%, #cfdef3 100%);
+   color: #333;
++  display: flex;
++  flex-direction: column;
++  overflow: hidden; /* Prevent body scrolling */
++  position: relative;
++}
++
++/* Background elements for Premium Glass effect */
++.glass-bg-shape {
++  position: absolute;
++  border-radius: 50%;
++  filter: blur(50px);
++  z-index: -1;
++}
++.shape-1 {
++  width: 250px;
++  height: 250px;
++  background: rgba(116, 123, 255, 0.4);
++  top: -50px;
++  left: -50px;
++}
++.shape-2 {
++  width: 200px;
++  height: 200px;
++  background: rgba(40, 167, 69, 0.3);
++  bottom: 0px;
++  right: -50px;
++}
++
++/* Common Reusable Classes */
++.glass-panel {
++  background: rgba(255, 255, 255, 0.6);
++  backdrop-filter: blur(12px);
++  -webkit-backdrop-filter: blur(12px);
++  border: 1px solid rgba(255, 255, 255, 0.5);
++  border-radius: 12px;
++  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+ }
++.mt-2 { margin-top: 8px; }
+ 
+-.header {
++/* Header */
++.app-header {
+   display: flex;
+   align-items: center;
+-  margin-bottom: 20px;
++  padding: 16px 20px;
++  background: rgba(255, 255, 255, 0.3);
++  backdrop-filter: blur(10px);
++  border-bottom: 1px solid rgba(255,255,255,0.4);
++  z-index: 10;
+ }
+-
+ .logo {
+   width: 40px;
+   height: 40px;
++  border-radius: 10px;
+   margin-right: 15px;
+-  border-radius: 8px;
++  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+ }
+-
+-h1 {
++.header-text h1 {
+   font-size: 18px;
+-  color: #0056b3;
++  color: #1a237e;
+   margin: 0;
+   font-weight: 700;
++  letter-spacing: -0.5px;
++}
++.header-text span {
++  font-size: 11px;
++  color: #5c6bc0;
++  font-weight: 600;
++  text-transform: uppercase;
++}
++
++/* Content Area */
++.content-area {
++  flex: 1;
++  width: 100%;
++  position: relative;
++  overflow: hidden;
++  padding: 15px;
++  box-sizing: border-box;
++}
++
++.section-title {
++  font-size: 12px;
++  font-weight: 700;
++  color: #666;
++  margin: 0 0 10px 5px;
++  text-transform: uppercase;
++  letter-spacing: 0.5px;
++}
++
++/* Tab Panels */
++.tab-pane {
++  display: none;
++  height: 100%;
++  width: 100%;
++  animation: fadeIn 0.3s ease;
++}
++.tab-pane.active {
++  display: block;
++}
++@keyframes fadeIn {
++  from { opacity: 0; transform: translateY(5px); }
++  to { opacity: 1; transform: translateY(0); }
+ }
+ 
+-.status-box {
++/* Tab 1 - Home */
++.status-card {
+   display: flex;
+   align-items: center;
+-  padding: 12px;
+-  background: white;
+-  border-radius: 8px;
+-  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
++  padding: 12px 15px;
+   margin-bottom: 15px;
+-  font-weight: 500;
+ }
+-
+ .status-indicator {
+-  width: 12px;
+-  height: 12px;
++  width: 14px;
++  height: 14px;
+   border-radius: 50%;
+-  margin-right: 12px;
++  margin-right: 15px;
+   background-color: #ccc;
+   box-shadow: 0 0 5px rgba(0,0,0,0.1);
+ }
+-.status-indicator.idle { background-color: #ccc; }
+-.status-indicator.pre { background-color: #ffc107; box-shadow: 0 0 8px #ffc107; }
+-.status-indicator.watching { background-color: #dc3545; box-shadow: 0 0 8px #dc3545; animation: pulse 1s infinite; }
+-.status-indicator.detected { background-color: #28a745; box-shadow: 0 0 8px #28a745; }
+-
++.status-indicator.idle { background-color: #a0aab5; }
++.status-indicator.pre { background-color: #faad14; box-shadow: 0 0 10px rgba(250, 173, 20, 0.5); }
++.status-indicator.watching { background-color: #ff4d4f; box-shadow: 0 0 10px rgba(255, 77, 79, 0.5); animation: pulse 1s infinite; }
++.status-indicator.detected { background-color: #52c41a; box-shadow: 0 0 10px rgba(82, 196, 26, 0.5); }
+ @keyframes pulse {
+-  0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.7); }
+-  70% { transform: scale(1.1); box-shadow: 0 0 0 8px rgba(220, 53, 69, 0); }
+-  100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(220, 53, 69, 0); }
++  0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 77, 79, 0.7); }
++  70% { transform: scale(1.1); box-shadow: 0 0 0 8px rgba(255, 77, 79, 0); }
++  100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 77, 79, 0); }
+ }
+-
+-hr {
+-  border: none;
+-  border-top: 1px dashed #ddd;
+-  margin: 15px 0;
++.status-info {
++  display: flex;
++  flex-direction: column;
+ }
+-
+-.wizard {
+-  background: white;
+-  padding: 15px;
+-  border-radius: 8px;
+-  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
++.status-label {
++  font-size: 10px;
++  color: #777;
++  text-transform: uppercase;
++  font-weight: 700;
++  margin-bottom: 2px;
+ }
+-
+-.wizard h3 {
+-  margin: 0 0 5px 0;
+-  font-size: 15px;
+-  color: #0056b3;
++.status-info strong {
++  font-size: 14px;
++  color: #333;
+ }
+ 
+-.subtitle {
+-  font-size: 12px;
+-  color: #666;
+-  margin: 0 0 15px 0;
++.hero-action {
++  padding: 20px;
++  text-align: center;
++  margin-bottom: 20px;
+ }
+-
+-.step {
++.hero-header {
+   display: flex;
+-  margin-bottom: 12px;
+   align-items: center;
++  justify-content: center;
++  margin-bottom: 15px;
+ }
+-
+-.step-icon {
+-  font-size: 20px;
++.hero-icon {
++  font-size: 32px;
+   margin-right: 12px;
+ }
+-
+-.step-content {
+-  flex: 1;
+-  display: flex;
+-  flex-direction: column;
++.hero-text { text-align: left; }
++.hero-text h3 { margin: 0; font-size: 16px; color: #1a237e; }
++.hero-text p { margin: 4px 0 0 0; font-size: 12px; color: #555; }
++.border-glow {
++  border: 1px solid rgba(40, 167, 69, 0.4);
++  background: linear-gradient(135deg, rgba(255,255,255,0.8), rgba(240, 255, 244, 0.6));
+ }
+-
+-.step-content label {
+-  font-size: 13px;
++.btn-primary {
++  width: 100%;
++  padding: 12px;
++  border-radius: 8px;
++  border: none;
++  background: linear-gradient(135deg, #28a745, #20c997);
++  color: white;
+   font-weight: 600;
+-  margin-bottom: 4px;
++  font-size: 14px;
++  cursor: pointer;
++  transition: all 0.2s;
++  box-shadow: 0 4px 10px rgba(40, 167, 69, 0.3);
++}
++.btn-primary:hover {
++  transform: translateY(-2px);
++  box-shadow: 0 6px 15px rgba(40, 167, 69, 0.4);
++}
++.btn-success {
++  background: #28a745; border: none; padding: 10px; color: white; border-radius: 6px; cursor: pointer; width: 100%; font-weight: bold;
+ }
+ 
++.grid-actions {
++  display: grid;
++  grid-template-columns: 1fr 1fr;
++  gap: 10px;
++}
+ .action-btn {
+-  padding: 8px 12px;
+-  background-color: #e9ecef;
+-  border: 1px solid #ced4da;
+-  color: #495057;
+-  border-radius: 6px;
+-  font-size: 13px;
++  background: rgba(255, 255, 255, 0.5);
++  border: 1px solid rgba(255,255,255,0.8);
++  padding: 10px;
++  border-radius: 8px;
+   cursor: pointer;
+-  font-weight: 600;
++  display: flex;
++  align-items: center;
++  gap: 8px;
++  font-size: 13px;
++  font-weight: 500;
++  color: #444;
+   transition: all 0.2s;
+-  text-align: center;
+ }
+ .action-btn:hover {
+-  background-color: #dee2e6;
++  background: white;
++  transform: translateY(-1px);
++  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
++}
++.action-btn.btn-active-success {
++  background: rgba(40, 167, 69, 0.1);
++  border-color: #28a745;
++  color: #28a745;
+ }
+ 
+-.action-btn.highlight {
+-  background-color: #0056b3;
+-  color: white;
+-  border-color: #0056b3;
++/* Tab 2 - Schedule */
++.schedule-scroll-area {
++  max-height: 300px; /* limits inner scroll instead of popup scroll */
++  overflow-y: auto;
++  padding-right: 5px;
+ }
+-.action-btn.highlight:hover {
+-  background-color: #004085;
++.schedule-scroll-area::-webkit-scrollbar {
++  width: 4px;
+ }
+-
+-.schedule-section h3 {
+-  font-size: 15px;
+-  color: #0056b3;
++.schedule-scroll-area::-webkit-scrollbar-thumb {
++  background: rgba(0,0,0,0.15);
++  border-radius: 10px;
+ }
+-
+-#scheduleList {
++.schedule-list {
+   list-style: none;
+   padding: 0;
+   margin: 0;
+-  max-height: 400px;
+-  overflow-y: auto;
+-  scrollbar-width: thin;
+-}
+-
+-#scheduleList::-webkit-scrollbar {
+-  width: 6px;
+ }
+-
+-#scheduleList::-webkit-scrollbar-thumb {
+-  background-color: #ced4da;
+-  border-radius: 10px;
+-}
+-
+-#scheduleList li.day-header {
+-  background: #0056b3;
+-  color: white;
++.schedule-list li.day-header {
++  background: rgba(0, 86, 179, 0.1);
++  color: #0056b3;
+   padding: 6px 12px;
+-  border-radius: 5px;
++  border-radius: 4px;
+   margin: 10px 0 5px 0;
+-  font-size: 13px;
+-  border-left: none;
+-  box-shadow: none;
++  font-size: 11px;
++  font-weight: 700;
++  text-transform: uppercase;
+   position: sticky;
+   top: 0;
+   z-index: 2;
++  backdrop-filter: blur(10px);
+ }
+-
+-#scheduleList li.class-item {
+-  background: white;
++/* Highlight ng├áy h├┤m nay */
++.schedule-list li.day-today {
++  background: rgba(40, 167, 69, 0.15);
++  color: #1a6b32;
++  border-left: 3px solid #28a745;
++}
++.schedule-list li.class-item {
++  background: rgba(255,255,255,0.6);
++  backdrop-filter: blur(10px);
+   margin-bottom: 8px;
+-  padding: 10px;
+-  border-radius: 6px;
+-  border-left: 4px solid #0056b3;
+-  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
++  padding: 12px;
++  border-radius: 8px;
++  border-left: 4px solid #5c6bc0;
++  box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+   font-size: 13px;
++  color: #333;
++}
++.schedule-list li.class-today {
++  border-left-color: #28a745;
++  background: rgba(240, 255, 244, 0.8);
+ }
+ .time-badge {
+   display: inline-block;
+   background: #e9ecef;
+-  padding: 3px 8px;
+-  border-radius: 12px;
++  padding: 4px 8px;
++  border-radius: 4px;
+   font-weight: 700;
+   font-size: 12px;
+   margin-right: 8px;
+   color: #495057;
+ }
++.live-class-card {
++  padding: 15px;
++  margin-bottom: 15px;
++  border: 1px solid #ff4d4f;
++  background: rgba(255, 241, 240, 0.8);
++}
++.live-header { display: flex; align-items: center; margin-bottom: 8px; }
++.live-badge {
++  background: #ff4d4f; color: white; padding: 3px 8px; border-radius: 4px; font-size: 10px; font-weight: 700; animation: pulse 1s infinite;
++}
++.live-className { font-size: 15px; color: #cf1322; }
++.empty-state { text-align: center; color: #888; font-size: 13px; padding: 20px; font-style: italic; }
+ 
+-.empty-state {
+-  color: #6c757d;
+-  font-style: italic;
+-  text-align: center;
++/* Tab 3 - Settings */
++.settings-desc { font-size: 12px; color: #555; margin: 0 0 10px 0; line-height: 1.4; }
++.offset-form { display: flex; gap: 8px; }
++.offset-form input {
++  padding: 8px 12px;
++  border: 1px solid rgba(0,0,0,0.1);
++  border-radius: 6px;
++  background: rgba(255,255,255,0.7);
++  font-size: 13px;
++  outline: none;
+ }
++#teacherInput { flex: 2; min-width: 0; }
++#offsetInput { flex: 1; max-width: 60px; text-align: center; }
++.offset-form .btn-primary { width: 40px; border-radius: 6px; padding: 8px; background: #5c6bc0; font-size: 16px; box-shadow: 0 2px 8px rgba(92,107,192,0.3); }
+ 
+-.btn-success {
+-  background-color: #28a745 !important;
+-  color: white !important;
+-  border-color: #28a745 !important;
++.teacher-scroll-area {
++  flex: 1;
++  max-height: 180px;
++  overflow-y: auto;
++  background: rgba(255,255,255,0.4);
++  border-radius: 8px;
++  padding: 5px;
++}
++.teacher-scroll-area::-webkit-scrollbar { width: 4px; }
++.teacher-scroll-area::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.15); border-radius: 10px; }
++.teacher-list { list-style: none; padding: 0; margin: 0; }
++.teacher-list li {
++  display: flex;
++  justify-content: space-between;
++  align-items: center;
++  background: white;
++  padding: 10px;
++  margin-bottom: 5px;
++  border-radius: 6px;
++  font-size: 13px;
++  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
++}
++.teacher-name { font-weight: 600; color: #333; }
++.teacher-offset { 
++  background: #f0f2f5; padding: 3px 8px; border-radius: 10px; font-size: 12px; font-weight: 700; color: #0056b3; 
++}
++.btn-delete {
++  background: #ffe3e3; color: #ff6b6b; border: none; width: 24px; height: 24px; border-radius: 4px; cursor: pointer; display: flex; align-items: center; justify-content: center;
+ }
+ 
+-.credit {
+-  text-align: center;
+-  margin-top: 15px;
+-  font-size: 11px;
++/* Bottom Navigation */
++.bottom-nav {
++  display: flex;
++  background: rgba(255, 255, 255, 0.85);
++  backdrop-filter: blur(15px);
++  border-top: 1px solid rgba(0,0,0,0.05);
++  margin-top: auto;
++  height: 60px;
++}
++.nav-item {
++  flex: 1;
++  background: transparent;
++  border: none;
++  display: flex;
++  flex-direction: column;
++  justify-content: center;
++  align-items: center;
+   color: #888;
+-  font-weight: 500;
+-  letter-spacing: 0.5px;
++  cursor: pointer;
++  transition: color 0.2s;
++}
++.nav-item svg { width: 24px; height: 24px; margin-bottom: 4px; }
++.nav-item span { font-size: 10px; font-weight: 600; }
++.nav-item:hover { color: #5c6bc0; }
++.nav-item.active { color: #5c6bc0; }
++
++/* Tab 4 - Notifications */
++.notification-scroll-area {
++  max-height: 380px;
++  overflow-y: auto;
++  padding-right: 5px;
++}
++.notification-scroll-area::-webkit-scrollbar { width: 4px; }
++.notification-scroll-area::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.15); border-radius: 10px; }
++
++.notification-list {
++  list-style: none;
++  padding: 0;
++  margin: 0;
++  display: flex;
++  flex-direction: column;
++  gap: 10px;
++}
++
++.notif-item {
++  background: var(--glass-bg, rgba(255,255,255,0.6));
++  border: 1px solid rgba(255,255,255,0.5);
++  border-radius: 10px;
++  padding: 12px;
++  backdrop-filter: blur(10px);
++  -webkit-backdrop-filter: blur(10px);
++  box-shadow: 0 2px 4px rgba(0,0,0,0.02);
++}
++
++.notif-header {
++  display: flex;
++  justify-content: space-between;
++  align-items: center;
++  margin-bottom: 6px;
++}
++
++.notif-title {
++  font-weight: 700;
++  color: #1a237e;
++  font-size: 13px;
++}
++
++.notif-time {
++  font-size: 11px;
++  color: #777;
++  font-weight: 600;
++}
++
++.notif-message {
++  font-size: 13px;
++  color: #444;
++  line-height: 1.4;
++  word-wrap: break-word;
+ }
+diff --git a/popup.html b/popup.html
+index 62c4f2d..4da0d31 100644
+--- a/popup.html
++++ b/popup.html
+@@ -1,89 +1,160 @@
+ <!DOCTYPE html>
+ <html lang="vi">
++
+ <head>
+-  <meta charset="UTF-8">
+-  <title>UIT Assistant Setup</title>
+-  <link rel="stylesheet" href="popup.css">
++   <meta charset="UTF-8">
++   <title>UIT Assistant - Premium</title>
++   <link rel="stylesheet" href="popup.css">
+ </head>
++
+ <body>
+-  <div class="header">
+-    <img src="icon128.png" alt="Logo" class="logo">
+-    <h1>UIT ASSISTANT v1.9</h1>
+-  </div>
+-
+-  <!-- Box trß║íng th├íi bot -->
+-  <div class="status-box" id="statusBox">
+-    <div class="status-indicator"></div>
+-    <span id="statusText">Trß║íng th├íi: ─Éang load...</span>
+-  </div>
+-
+-  <hr>
+-
+-  <!-- Setup Wizard -->
+-  <div class="wizard">
+-    <h3>ΓÜÖ∩╕Å Setup Nhanh (3 B╞░ß╗¢c)</h3>
+-    <p class="subtitle">Ho├án th├ánh ─æß╗â Bot tß╗▒ ─æß╗Öng l├ám viß╗çc</p>
+-    
+-    <div class="step" id="step1">
+-      <div class="step-icon">1∩╕ÅΓâú</div>
+-      <div class="step-content">
+-        <label>─É─âng nhß║¡p Portal CITD</label>
+-        <button id="btnLoginPortal" class="action-btn">Mß╗ƒ Cß╗òng Sinh Vi├¬n</button>
++   <!-- Nß╗ün trang tr├¡ -->
++   <div class="glass-bg-shape shape-1"></div>
++   <div class="glass-bg-shape shape-2"></div>
++
++   <!-- Header -->
++   <header class="app-header">
++      <img src="icon128.png" alt="Logo" class="logo">
++      <div class="header-text">
++         <h1>UIT Assistant</h1>
++         <span>Smart Bot v2.0</span>
+       </div>
+-    </div>
++   </header>
++
++   <!-- Content Khu Vß╗▒c -->
++   <main class="content-area">
++
++      <!-- TAB 1: HOME -->
++      <div id="tab-home" class="tab-pane active">
++         <!-- Trß║íng th├íi -->
++         <div class="status-card glass-panel">
++            <div class="status-indicator"></div>
++            <div class="status-info">
++               <span class="status-label">TRß║áNG TH├üI Hß╗å THß╗ÉNG</span>
++               <strong id="statusText">ΓÅ│ ─Éang tß║úi...</strong>
++            </div>
++         </div>
+ 
+-    <div class="step" id="step2">
+-      <div class="step-icon">2∩╕ÅΓâú</div>
+-      <div class="step-content">
+-        <label>─Éß╗ông Bß╗Ö Lß╗ïch Hß╗ìc</label>
+-        <button id="btnSyncTKB" class="action-btn highlight">Qu├⌐t Lß╗ïch Ngay</button>
++         <!-- Hero Action (Quan trß╗ìng nhß║Ñt) -->
++         <div class="hero-action glass-panel border-glow">
++            <div class="hero-header">
++               <div class="hero-icon">≡ƒñû</div>
++               <div class="hero-text">
++                  <h3>Tß╗▒ ─Éß╗Öng V├áo Lß╗¢p</h3>
++                  <p>Bot sß║╜ tß╗▒ nhß║úy v├áo lß╗¢p khi ─æß║┐n giß╗¥</p>
++               </div>
++            </div>
++            <button id="btnAutoTeams" class="btn-primary glow-btn">K├¡ch Hoß║ít Auto-Join</button>
++         </div>
++
++         <!-- Quick Actions -->
++         <h4 class="section-title">Lß╗ÉI Tß║«T NHANH</h4>
++         <div class="grid-actions">
++            <button id="btnLoginPortal" class="action-btn">
++               <span class="btn-icon">≡ƒöù</span>
++               <span>Portal C─É</span>
++            </button>
++            <button id="btnSyncTKB" class="action-btn">
++               <span class="btn-icon">≡ƒöä</span>
++               <span>─Éß╗ông Bß╗Ö TKB</span>
++            </button>
++            <button id="btnOpenTeams" class="action-btn">
++               <span class="btn-icon">≡ƒÆ¼</span>
++               <span>Mß╗ƒ Teams</span>
++            </button>
++            <button id="btnOpenDashboard" class="action-btn">
++               <span class="btn-icon">≡ƒûÑ∩╕Å</span>
++               <span>Dashboard</span>
++            </button>
++         </div>
+       </div>
+-    </div>
+ 
+-    <div class="step" id="step3">
+-      <div class="step-icon">3∩╕ÅΓâú</div>
+-      <div class="step-content">
+-        <label>Mß╗ƒ Tab MS Teams</label>
+-        <button id="btnOpenTeams" class="action-btn">Mß╗ƒ MS Teams</button>
++      <!-- TAB 2: SCHEDULE -->
++      <div id="tab-schedule" class="tab-pane">
++         <h4 class="section-title">Lß╗èCH Hß╗îC TUß║ªN N├ÇY</h4>
++
++         <div id="active-link-container" class="live-class-card glass-panel" style="display: none;">
++            <div class="live-header">
++               <span class="live-badge">≡ƒö┤ ─ÉANG DIß╗äN RA</span>
++            </div>
++            <b id="meeting-className" class="live-className">M├┤n hß╗ìc</b>
++            <button id="btnOpenMeeting" class="btn-success mt-2">≡ƒÄÑ V├áo Lß╗¢p Ngay</button>
++         </div>
++
++         <div class="schedule-scroll-area">
++            <ul id="scheduleList" class="schedule-list">
++               <li class="empty-state">Ch╞░a ─æß╗ông bß╗Ö lß╗ïch hß╗ìc...</li>
++            </ul>
++         </div>
+       </div>
+-    </div>
+-
+-    <!-- V1.9 Auto Macro Step -->
+-    <div class="step" id="step4">
+-      <div class="step-icon">4∩╕ÅΓâú</div>
+-      <div class="step-content">
+-        <label>Bß║¡t Cß║únh B├ío All M├┤n</label>
+-        <button id="btnAutoTeams" class="action-btn highlight">C├ái Auto-Notify</button>
++
++      <!-- TAB 3: SETTINGS -->
++      <div id="tab-settings" class="tab-pane">
++         <h4 class="section-title">TUß╗▓ CHß╗êNH GIß╗£ GIß║óNG VI├èN</h4>
++         <div class="glass-panel" style="padding: 12px; margin-bottom: 15px;">
++            <p class="settings-desc">Nß║┐u GV th╞░ß╗¥ng xuy├¬n v├áo trß╗à, h├úy nhß║¡p sß╗æ ph├║t trß╗à (VD: <b>15</b>). Nß║┐u v├áo sß╗¢m,
++               nhß║¡p sß╗æ ├óm (VD: <b>-5</b>).</p>
++
++            <div class="offset-form mt-2">
++               <input type="text" id="teacherInput" placeholder="T├¬n GV (VD: Nguyen A)" autocomplete="off">
++               <input type="number" id="offsetInput" placeholder="Ph├║t (┬▒)">
++               <button id="btnSaveOffset" class="btn-primary">+</button>
++            </div>
++         </div>
++
++         <h4 class="section-title">DANH S├üCH ─É├â L╞»U</h4>
++         <div class="teacher-scroll-area">
++            <ul class="teacher-list" id="teacherList">
++               <!-- Injected JS -->
++            </ul>
++         </div>
++      </div>
++
++      <!-- TAB 4: NOTIFICATIONS -->
++      <div id="tab-notifications" class="tab-pane">
++         <h4 class="section-title">NHß║¼T K├¥ BOT (24H QUA)</h4>
++         <div class="notification-scroll-area">
++            <ul class="notification-list" id="notificationList">
++               <li class="empty-state">Ch╞░a c├│ th├┤ng b├ío n├áo...</li>
++            </ul>
++         </div>
+       </div>
+-    </div>
+-  </div>
+-
+-  <hr>
+-
+-  <!-- Box lß╗ïch hß╗ìc -->
+-  <div class="card" id="schedule-box">
+-    <h4><span class="icon">≡ƒôÜ</span> Lß╗ïch Hß╗ìc H├┤m Nay</h4>
+-    <!-- V1.9: N├║t Mß╗ƒ Nhanh Link (Video Icon) Nß║┐u ─É├ú C├│ Link -->
+-    <div id="active-link-container" style="display: none; padding-bottom: 12px; border-bottom: 1px dashed #e0e0e0; margin-bottom: 10px;">
+-       <button id="btnOpenMeeting" class="btn btn-success" style="width: 100%; font-size: 13px; font-weight: 600; padding: 10px; background-color: #28a745; display: flex; align-items: center; justify-content: center; gap: 8px;">
+-          <span style="font-size: 16px;">≡ƒÄÑ</span> <span>V├áo Lß╗¢p: <b id="meeting-className"></b></span>
+-       </button>
+-       <div style="font-size: 10px; color: #666; text-align: center; margin-top: 4px;">Tham gia bß║▒ng Link MS Teams l├║c n├úy</div>
+-    </div>
+-    
+-    <ul class="schedule-list" id="scheduleList">
+-      <li class="empty-state">─Éang tß║úi lß╗ïch...</li>
+-    </ul>
+-  </div>
+-
+-  <div class="credit" style="text-align: center;">
+-    Γ£¿ Designed with Γ¥ñ∩╕Å by <a href="http://zalo.me/0834422439" target="_blank" style="color: #0056b3; font-weight: bold; text-decoration: none;">Hungpixi</a>
+-    <div style="font-size: 11px; color: #777; margin-top: 6px; font-weight: normal;">
+-      Γÿò Nß║┐u tool x├ái ß╗òn, em xin 5-10k kiß║┐m c╞ím duy tr├¼ ph├ít triß╗ân qua Momo: <b style="color: #a50064; user-select: all;">0834422439</b> nh├⌐!
+-    </div>
+-  </div>
+-
+-  <script src="schedule-logic.js"></script>
+-  <script src="popup.js"></script>
++
++   </main>
++
++   <!-- BOTTOM NAVIGATION -->
++   <nav class="bottom-nav">
++      <button class="nav-item active" data-tab="tab-home">
++         <svg fill="currentColor" viewBox="0 0 24 24">
++            <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z" />
++         </svg>
++         <span>Trang chß╗º</span>
++      </button>
++      <button class="nav-item" data-tab="tab-schedule">
++         <svg fill="currentColor" viewBox="0 0 24 24">
++            <path
++               d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11z" />
++         </svg>
++         <span>Lß╗ïch hß╗ìc</span>
++      </button>
++      <button class="nav-item" data-tab="tab-settings">
++         <svg fill="currentColor" viewBox="0 0 24 24">
++            <path
++               d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.06-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.06.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .43-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.49-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z" />
++         </svg>
++         <span>Cß║Ñu h├¼nh</span>
++      </button>
++      <button class="nav-item" data-tab="tab-notifications">
++         <svg fill="currentColor" viewBox="0 0 24 24">
++            <path
++               d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2zm-2 1H8v-6c0-2.48 1.51-4.5 4-4.5s4 2.02 4 4.5v6z" />
++         </svg>
++         <span>Nhß║¡t k├╜</span>
++      </button>
++   </nav>
++
++   <script src="schedule-logic.js"></script>
++   <script src="popup.js"></script>
+ </body>
+-</html>
++
++</html>
+\ No newline at end of file
+diff --git a/popup.js b/popup.js
+index 8f88b00..bc2f8c1 100644
+--- a/popup.js
++++ b/popup.js
+@@ -1,124 +1,234 @@
+ document.addEventListener('DOMContentLoaded', () => {
+-  const statusBox = document.getElementById('statusBox');
++  // ELEMENTS
+   const statusIndicator = document.querySelector('.status-indicator');
+   const statusText = document.getElementById('statusText');
+-  const scheduleList = document.getElementById('scheduleList');
+   
++  const scheduleList = document.getElementById('scheduleList');
++  const activeLinkContainer = document.getElementById('active-link-container');
++  const meetingClassName = document.getElementById('meeting-className');
++  const btnOpenMeeting = document.getElementById('btnOpenMeeting');
++
++  // ACTIONS
+   const btnLoginPortal = document.getElementById('btnLoginPortal');
+   const btnSyncTKB = document.getElementById('btnSyncTKB');
+   const btnOpenTeams = document.getElementById('btnOpenTeams');
+   const btnAutoTeams = document.getElementById('btnAutoTeams');
++  const btnOpenDashboard = document.getElementById('btnOpenDashboard');
+ 
+-  const activeLinkContainer = document.getElementById('active-link-container');
+-  const btnOpenMeeting = document.getElementById('btnOpenMeeting');
+-  const meetingClassName = document.getElementById('meeting-className');
++  // TABS LOGIC
++  const navItems = document.querySelectorAll('.nav-item');
++  const tabPanes = document.querySelectorAll('.tab-pane');
++  
++  navItems.forEach(nav => {
++    nav.addEventListener('click', () => {
++       const target = nav.dataset.tab;
++       // Reset active
++       navItems.forEach(n => n.classList.remove('active'));
++       tabPanes.forEach(p => p.classList.remove('active'));
++       
++       // Set active
++       nav.classList.add('active');
++       document.getElementById(target).classList.add('active');
++    });
++  });
+ 
+-  // Load Status
++  // ======= HOME TAB LOGIC ======= //
++  // 1. Get Status
+   chrome.runtime.sendMessage({ type: "GET_STATE" }, (res) => {
+-    if (!res) {
+-      statusText.textContent = "Ch╞░a kß║┐t nß╗æi Background";
+-      statusIndicator.className = "status-indicator";
+-      return;
+-    }
+-    const st = res.state;
+-    statusIndicator.className = "status-indicator";
+-    if (st === "IDLE") {
++    if (!res) return;
++    if (statusIndicator) statusIndicator.className = "status-indicator";
++    if (res.state === "IDLE") {
+       statusIndicator.classList.add("idle");
+-      statusText.innerHTML = "≡ƒÆñ <b>─Éang ngß╗º</b> (Chß╗¥ TKB)";
+-    } else if (st === "PRE_CLASS") {
++      statusText.innerHTML = "≡ƒÆñ ─Éang ngß╗º (Chß╗¥ TKB)";
++    } else if (res.state === "PRE_CLASS") {
+       statusIndicator.classList.add("pre");
+-      statusText.innerHTML = "ΓÅ│ <b>Chuß║⌐n bß╗ï hß╗ìc</b> (─Éß╗úi 30p)";
+-    } else if (st === "WATCHING") {
++      statusText.innerHTML = "ΓÅ│ Chuß║⌐n bß╗ï hß╗ìc (─Éß╗úi 30p)";
++    } else if (res.state === "WATCHING") {
+       statusIndicator.classList.add("watching");
+-      statusText.innerHTML = "≡ƒö┤ <b>─Éang qu├⌐t Teams</b>";
+-    } else if (st === "CLASS_DETECTED") {
++      statusText.innerHTML = "≡ƒö┤ ─Éang qu├⌐t Teams";
++    } else if (res.state === "CLASS_DETECTED") {
+       statusIndicator.classList.add("detected");
+-      statusText.innerHTML = "Γ£à <b>─É├ú ph├ít hiß╗çn Link!</b>";
++      statusText.innerHTML = "Γ£à ─É├ú ph├ít hiß╗çn Link!";
+     }
+   });
+ 
+-  // Load Schedule & Meeting Link
++  // 2. Button Check (Portal, Teams, Sync)
++  chrome.runtime.sendMessage({ type: "CHECK_LOGINS" }, (res) => {
++    if (res && res.citdLogin) {
++      btnLoginPortal.classList.add("btn-active-success");
++      btnLoginPortal.innerHTML = "Γ£à Portal C─É";
++    }
++    if (res && res.teamsLogin) {
++      btnOpenTeams.classList.add("btn-active-success");
++      btnOpenTeams.innerHTML = "Γ£à MS Teams";
++    }
++  });
++
++  // ======= ACTIONS ======= //
++  btnLoginPortal.addEventListener('click', () => chrome.tabs.create({ url: "https://student.citd.edu.vn/signin" }));
++  btnSyncTKB.addEventListener('click', () => chrome.tabs.create({ url: "https://student.citd.edu.vn/projects" }));
++  btnOpenTeams.addEventListener('click', () => chrome.tabs.create({ url: "https://teams.cloud.microsoft" }));
++  btnOpenDashboard.addEventListener('click', () => {
++    chrome.tabs.create({ url: chrome.runtime.getURL('dashboard.html') });
++  });
++  
++  if (btnAutoTeams) {
++    btnAutoTeams.addEventListener('click', () => {
++      chrome.tabs.query({ url: ["*://teams.cloud.microsoft/*", "*://teams.microsoft.com/*"] }, (tabs) => {
++        if (tabs && tabs.length > 0 && tabs[0].id) {
++          chrome.tabs.sendMessage(tabs[0].id, { type: "RUN_MACRO", target: "teams" }, (res) => {
++             if (chrome.runtime.lastError) {
++               console.warn("Error sending message to tab:", chrome.runtime.lastError.message);
++               return;
++             }
++             if (res && res.status === "started") {
++               btnAutoTeams.innerHTML = "Γ£à ─Éang Chß║íy Macro...";
++               btnAutoTeams.style.background = "#fff";
++               btnAutoTeams.style.color = "#28a745";
++               btnAutoTeams.style.pointerEvents = "none";
++             }
++          });
++        } else {
++          alert("≡ƒÜ¿ Bß║ín ch╞░a mß╗ƒ tab Teams! Mß╗ƒ Teams tr╞░ß╗¢c khi K├¡ch Hoß║ít Auto-Join.");
++        }
++      });
++    });
++  }
++
++  // ======= SCHEDULE TAB LOGIC ======= //
+   chrome.storage.local.get(["schedule", "lastMeetingLink", "lastMeetingClass", "lastMeetingTime"], (data) => {
+-    // 1. Render Schedule
+-    renderScheduleList(data.schedule || [], scheduleList, btnSyncTKB);
++    // Render Schedule using schedule-logic.js
++    if (typeof renderScheduleList === 'function' && scheduleList) {
++      renderScheduleList(data.schedule || [], scheduleList, btnSyncTKB);
++    }
+ 
+-    // 2. Hiß╗ân thß╗ï n├║t V├ÇO Lß╗ÜP (Nß║┐u ─æang c├│ link bß║»t ─æ╞░ß╗úc)
++    // Active Link Detection
+     if (data.lastMeetingLink && data.lastMeetingTime) {
+       const hoursSince = (Date.now() - data.lastMeetingTime) / (1000 * 60 * 60);
+       if (hoursSince < 4) {
+-        activeLinkContainer.style.display = 'block';
+-        meetingClassName.textContent = data.lastMeetingClass || "Lß╗¢p hß╗ìc";
+-        btnOpenMeeting.onclick = () => {
+-           chrome.tabs.create({ url: data.lastMeetingLink, active: true }, (tab) => {
+-             if (chrome.runtime.lastError) {}
+-           });
+-        };
++        if (activeLinkContainer) activeLinkContainer.style.display = 'block';
++        if (meetingClassName) meetingClassName.textContent = data.lastMeetingClass || "Lß╗¢p ─Éang Hß╗ìp";
++        if (btnOpenMeeting) btnOpenMeeting.onclick = () => chrome.tabs.create({ url: data.lastMeetingLink, active: true });
+       }
+     }
+   });
+ 
+-  // ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+-  // V1.8: SMART CHECKLIST (QU├ëT ─É─éNG NHß║¼P)
+-  // ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+-  chrome.runtime.sendMessage({ type: "CHECK_LOGINS" }, (res) => {
+-    if (res && res.citdLogin) {
+-      btnLoginPortal.innerHTML = "Γ£à ─É├ú ─É─âng Nhß║¡p CITD";
+-      btnLoginPortal.classList.add("btn-success");
+-      btnLoginPortal.style.pointerEvents = "none"; // Kh├┤ng cß║ºn bß║Ñm nß╗»a
+-    }
+-    if (res && res.teamsLogin) {
+-      btnOpenTeams.innerHTML = "Γ£à ─É├ú ─É─âng Nhß║¡p Teams";
+-      btnOpenTeams.classList.add("btn-success");
+-      btnOpenTeams.style.pointerEvents = "none"; // Kh├┤ng cß║ºn bß║Ñm nß╗»a
+-    }
+-  });
++  // ======= SETTINGS TAB LOGIC ======= //
++  const teacherInput = document.getElementById('teacherInput');
++  const offsetInput = document.getElementById('offsetInput');
++  const btnSaveOffset = document.getElementById('btnSaveOffset');
++  const teacherListContainer = document.getElementById('teacherList');
+ 
+-  // Checklist Actions
+-  btnLoginPortal.addEventListener('click', () => {
+-    chrome.tabs.create({ url: "https://student.citd.edu.vn/signin" }, (tab) => {
+-      if (chrome.runtime.lastError) {}
+-    });
+-  });
++  function renderTeacherOffsets() {
++    chrome.storage.local.get("teacherConfigs", (data) => {
++      const configs = data.teacherConfigs || {};
++      if (teacherListContainer) teacherListContainer.innerHTML = "";
++      
++      const keys = Object.keys(configs);
++      if (keys.length === 0) {
++        if (teacherListContainer) teacherListContainer.innerHTML = "<li class='empty-state'>Ch╞░a c├│ tuß╗│ chß╗ënh n├áo...</li>";
++        return;
++      }
+ 
+-  btnSyncTKB.addEventListener('click', () => {
+-    chrome.tabs.create({ url: "https://student.citd.edu.vn/projects" }, (tab) => {
+-      if (chrome.runtime.lastError) {}
+-    });
+-  });
++      keys.forEach(teacher => {
++        const tr = document.createElement("li");
+ 
+-  btnOpenTeams.addEventListener('click', () => {
+-    chrome.tabs.create({ url: "https://teams.cloud.microsoft" }, (tab) => {
+-      if (chrome.runtime.lastError) {}
++        const info = document.createElement("div");
++        const nameSpan = document.createElement("span");
++        nameSpan.className = "teacher-name";
++        nameSpan.textContent = teacher;
++        const offsetSpan = document.createElement("span");
++        offsetSpan.className = "teacher-offset";
++        const offset = configs[teacher].offset;
++        offsetSpan.textContent = `${offset > 0 ? '+' + offset : offset} ph├║t`;
++        info.appendChild(nameSpan);
++        info.appendChild(document.createTextNode(" "));
++        info.appendChild(offsetSpan);
++        
++        const btnDelete = document.createElement("button");
++        btnDelete.className = "btn-delete";
++        btnDelete.innerText = "Γ£ò";
++        btnDelete.onclick = () => {
++          delete configs[teacher];
++          chrome.storage.local.set({ teacherConfigs: configs }, () => {
++            renderTeacherOffsets(); // Re-render
++          });
++        };
++        
++        tr.appendChild(info);
++        tr.appendChild(btnDelete);
++        if (teacherListContainer) teacherListContainer.appendChild(tr);
++      });
+     });
+-  });
++  }
+ 
+-  // V1.9 Bß║Ñm n├║t tß╗½ Popup -> Gß╗ìi thß║│ng content script cß╗ºa Teams (nß║┐u ─æang bß║¡t)
+-  btnAutoTeams.addEventListener('click', () => {
+-    chrome.tabs.query({ url: ["*://teams.cloud.microsoft/*", "*://teams.microsoft.com/*"] }, (tabs) => {
+-      if (chrome.runtime.lastError) {
+-        console.error(chrome.runtime.lastError);
++  // Khß╗ƒi chß║íy render list
++  renderTeacherOffsets();
++
++  if (btnSaveOffset) {
++    btnSaveOffset.addEventListener('click', () => {
++      const tName = teacherInput.value.trim();
++      const tOffset = parseInt(offsetInput.value);
++      
++      if (!tName || isNaN(tOffset)) {
++        alert("Vui l├▓ng ─æiß╗ün ─æß╗º T├¬n Gi├ío Vi├¬n v├á Sß╗æ ph├║t!");
+         return;
+       }
+-      
+-      if (tabs && tabs.length > 0 && tabs[0].id) {
+-        // Tab Teams ─æ├ú mß╗ƒ, n├⌐m m├¼n WAKE UP MACRO xuß╗æng
+-        chrome.tabs.sendMessage(tabs[0].id, { type: "RUN_MACRO", target: "teams" }, (res) => {
+-           if (chrome.runtime.lastError) {
+-             console.warn("[UIT] Popup to Teams channel failed.");
+-             return;
+-           }
+-           if (res && res.status === "started") {
+-             btnAutoTeams.innerHTML = "Γ£à ─Éang Chß║íy Macro...";
+-             btnAutoTeams.classList.remove("highlight");
+-             btnAutoTeams.style.backgroundColor = "#28a745";
+-             btnAutoTeams.style.borderColor = "#28a745";
+-             btnAutoTeams.style.color = "white";
+-             btnAutoTeams.style.pointerEvents = "none";
+-           }
++
++      chrome.storage.local.get("teacherConfigs", (data) => {
++        let configs = data.teacherConfigs || {};
++        configs[tName] = { offset: tOffset };
++        
++        chrome.storage.local.set({ teacherConfigs: configs }, () => {
++          teacherInput.value = "";
++          offsetInput.value = "";
++          renderTeacherOffsets();
+         });
+-      } else {
+-        alert("≡ƒÜ¿ Lß╗ùi: Bß║ín ch╞░a mß╗ƒ Tab MS Teams n├áo cß║ú! H├úy ho├án th├ánh B╞░ß╗¢c 3 (Mß╗ƒ v├á ─É─âng Nhß║¡p MS Teams) tr╞░ß╗¢c khi k├¡ch hoß║ít Macro nh├⌐.");
++      });
++    });
++  }
++
++  // ======= NOTIFICATIONS TAB LOGIC ======= //
++  const notificationList = document.getElementById('notificationList');
++  function renderNotifications() {
++    chrome.storage.local.get("notificationLogs", (data) => {
++      const logs = data.notificationLogs || [];
++      if (!notificationList) return;
++      notificationList.innerHTML = "";
++      
++      if (logs.length === 0) {
++        notificationList.innerHTML = '<li class="empty-state">Ch╞░a c├│ th├┤ng b├ío n├áo...</li>';
++        return;
+       }
++
++      logs.forEach(log => {
++        const li = document.createElement("li");
++        li.className = "notif-item";
++
++        // Format date/time
++        const dateObj = new Date(log.timestamp);
++        const timeStr = dateObj.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) + ' ' + dateObj.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' });
++
++        const header = document.createElement("div");
++        header.className = "notif-header";
++        const titleSpan = document.createElement("span");
++        titleSpan.className = "notif-title";
++        titleSpan.textContent = log.title;
++        const timeSpan = document.createElement("span");
++        timeSpan.className = "notif-time";
++        timeSpan.textContent = timeStr;
++        header.appendChild(titleSpan);
++        header.appendChild(timeSpan);
++        const msgDiv = document.createElement("div");
++        msgDiv.className = "notif-message";
++        msgDiv.textContent = log.message;
++        li.appendChild(header);
++        li.appendChild(msgDiv);
++        notificationList.appendChild(li);
++      });
+     });
+-  });
++  }
++
++  // Gß╗ìi ─æß╗â render lß║ºn ─æß║ºu l├║c popup mß╗ƒ
++  renderNotifications();
+ });
+diff --git a/schedule-logic.js b/schedule-logic.js
+index f65a07b..2080f93 100644
+--- a/schedule-logic.js
++++ b/schedule-logic.js
+@@ -1,55 +1,80 @@
+ /**
+- * H├ám render danh s├ích lß╗ïch hß╗ìc (D├╣ng chung cho Popup v├á Unit Test)
++ * Render danh s├ích lß╗ïch hß╗ìc theo tuß║ºn.
++ * D├╣ng chung cho Popup, Dashboard, v├á Unit Test.
++ * Highlight ng├áy h├┤m nay ─æß╗â dß╗à nh├¼n.
+  */
+ function renderScheduleList(list, scheduleList, btnSyncTKB) {
+   if (list.length === 0) {
+     scheduleList.innerHTML = `<li class="empty-state">H├┤m nay rß║únh rang! Kh├┤ng c├│ lß╗¢p n├áo.</li>`;
+     if (btnSyncTKB) btnSyncTKB.textContent = "Qu├⌐t Lß╗ïch Ngay";
+-  } else {
+-    if (btnSyncTKB) {
+-      btnSyncTKB.innerHTML = "Γ£à ─É├ú ─Éß╗ông Bß╗Ö TKB";
+-      btnSyncTKB.classList.remove("highlight");
+-      btnSyncTKB.style.backgroundColor = "#28a745";
+-      btnSyncTKB.style.borderColor = "#28a745";
+-      btnSyncTKB.style.color = "white";
+-    }
+-
+-    // Render lß╗ïch hß╗ìc cß║ú tuß║ºn
+-    const dayOrder = ["Thß╗⌐ 2", "Thß╗⌐ 3", "Thß╗⌐ 4", "Thß╗⌐ 5", "Thß╗⌐ 6", "Thß╗⌐ 7", "Chß╗º nhß║¡t"];
+-    const groupedSchedule = {};
+-    
+-    dayOrder.forEach(day => {
+-      groupedSchedule[day] = list.filter(item => item.day === day);
+-    });
++    return;
++  }
++
++  if (btnSyncTKB) {
++    btnSyncTKB.innerHTML = "Γ£à ─É├ú ─Éß╗ông Bß╗Ö TKB";
++    btnSyncTKB.classList.remove("highlight");
++    btnSyncTKB.style.backgroundColor = "#28a745";
++    btnSyncTKB.style.borderColor = "#28a745";
++    btnSyncTKB.style.color = "white";
++  }
++
++  const dayOrder = ["Thß╗⌐ 2", "Thß╗⌐ 3", "Thß╗⌐ 4", "Thß╗⌐ 5", "Thß╗⌐ 6", "Thß╗⌐ 7", "Chß╗º nhß║¡t"];
++  const dayIndexMap = { "Thß╗⌐ 2": 1, "Thß╗⌐ 3": 2, "Thß╗⌐ 4": 3, "Thß╗⌐ 5": 4, "Thß╗⌐ 6": 5, "Thß╗⌐ 7": 6, "Chß╗º nhß║¡t": 0 };
++  const todayIndex = new Date().getDay();
++
++  const groupedSchedule = {};
++  dayOrder.forEach(day => {
++    groupedSchedule[day] = list.filter(item => item.day === day);
++  });
++
++  scheduleList.innerHTML = "";
++
++  let hasAnyClass = false;
++  dayOrder.forEach(day => {
++    const dayClasses = groupedSchedule[day];
++    if (dayClasses.length === 0) return;
++
++    hasAnyClass = true;
++    const isToday = dayIndexMap[day] === todayIndex;
++
++    // Ti├¬u ─æß╗ü ng├áy ΓÇö highlight nß║┐u l├á h├┤m nay
++    const dayHeader = document.createElement("li");
++    dayHeader.className = isToday ? "day-header day-today" : "day-header";
++    const headerIcon = document.createTextNode(isToday ? "≡ƒôà " : "≡ƒôà ");
++    const headerStrong = document.createElement("strong");
++    headerStrong.textContent = isToday ? `${day} ΓÇö H├öM NAY` : day;
++    dayHeader.appendChild(headerIcon);
++    dayHeader.appendChild(headerStrong);
++    scheduleList.appendChild(dayHeader);
++
++    dayClasses.forEach(item => {
++      const li = document.createElement("li");
++      li.className = isToday ? "class-item class-today" : "class-item";
++
++      // Fix XSS: d├╣ng DOM methods thay v├¼ innerHTML
++      const timeBadge = document.createElement("span");
++      timeBadge.className = "time-badge";
++      timeBadge.textContent = item.time;
++
++      const nameStrong = document.createElement("strong");
++      const hasTitle = /^(ThS|TS|GS|PGS|Gi├ío vi├¬n)\.?\s/i.test(item.teacher);
++      const teacherDisplay = hasTitle ? item.teacher : `Gi├ío vi├¬n ${item.teacher}`;
++      nameStrong.textContent = item.name;
++
++      const teacherNode = document.createTextNode(`≡ƒæ¿ΓÇì≡ƒÅ½ ${teacherDisplay}`);
++
++      li.appendChild(timeBadge);
++      li.appendChild(document.createTextNode(" "));
++      li.appendChild(nameStrong);
++      li.appendChild(document.createElement("br"));
++      li.appendChild(teacherNode);
+ 
+-    scheduleList.innerHTML = "";
+-    
+-    let hasAnyClass = false;
+-    dayOrder.forEach(day => {
+-      const dayClasses = groupedSchedule[day];
+-      if (dayClasses.length > 0) {
+-        hasAnyClass = true;
+-        // Th├¬m ti├¬u ─æß╗ü ng├áy
+-        const dayHeader = document.createElement("li");
+-        dayHeader.className = "day-header";
+-        dayHeader.innerHTML = `≡ƒôà <strong>${day}</strong>`;
+-        scheduleList.appendChild(dayHeader);
+-
+-        dayClasses.forEach(item => {
+-          const li = document.createElement("li");
+-          li.className = "class-item";
+-          // V1.9: Th├¬m chß╗» Gi├ío vi├¬n nß║┐u ch╞░a c├│ chß╗⌐c danh (ThS, TS, GS, PGS...)
+-          const hasTitle = /^(ThS|TS|GS|PGS|Gi├ío vi├¬n)\.?\s/i.test(item.teacher);
+-          const teacherDisplay = hasTitle ? item.teacher : `Gi├ío vi├¬n ${item.teacher}`;
+-          li.innerHTML = `<span class="time-badge">${item.time}</span> <strong>${item.name}</strong><br>≡ƒæ¿ΓÇì≡ƒÅ½ ${teacherDisplay}`;
+-          scheduleList.appendChild(li);
+-        });
+-      }
++      scheduleList.appendChild(li);
+     });
++  });
+ 
+-    if (!hasAnyClass) {
+-      scheduleList.innerHTML = `<li class="empty-state">Tuß║ºn n├áy rß║únh rang! Kh├┤ng c├│ lß╗¢p n├áo.</li>`;
+-    }
++  if (!hasAnyClass) {
++    scheduleList.innerHTML = `<li class="empty-state">Tuß║ºn n├áy rß║únh rang! Kh├┤ng c├│ lß╗¢p n├áo.</li>`;
+   }
+ }
+ 
+diff --git a/test-background.js b/test-background.js
+new file mode 100644
+index 0000000..1a1275b
+--- /dev/null
++++ b/test-background.js
+@@ -0,0 +1,97 @@
++// test-background.js
++// Giß║ú lß║¡p logic kiß╗âm tra lß╗ïch hß╗ìc (getImminentClass) cß╗ºa background.js
++// ─æß╗â ─æß║úm bß║úo t├¡nh n─âng offset hoß║ít ─æß╗Öng ch├¡nh x├íc.
++
++function getImminentClass(schedule, teacherConfigs = {}, mockNow = new Date()) {
++  const dayMap = {
++    "Chß╗º nhß║¡t": 0, "Thß╗⌐ 2": 1, "Thß╗⌐ 3": 2,
++    "Thß╗⌐ 4": 3, "Thß╗⌐ 5": 4, "Thß╗⌐ 6": 5, "Thß╗⌐ 7": 6
++  };
++
++  for (const item of schedule) {
++    if (dayMap[item.day] !== mockNow.getDay()) continue;
++
++    const match = item.time.match(/(\d+)h(\d+)?/);
++    if (!match) continue;
++    const h = parseInt(match[1]);
++    const m = match[2] ? parseInt(match[2]) : 0;
++
++    const classStart = new Date(mockNow.getTime()); // Clone mockNow ─æß╗â giß╗» c├╣ng thß╗⌐/ng├áy/th├íng/n─âm
++    classStart.setHours(h, m, 0, 0);
++
++    // Tinh chß╗ënh giß╗¥ hß╗ìc dß╗▒a tr├¬n teacherConfigs
++    let offsetMinutes = 0;
++    if (teacherConfigs && teacherConfigs[item.teacher]) {
++       offsetMinutes = parseInt(teacherConfigs[item.teacher].offset) || 0;
++    }
++    classStart.setMinutes(classStart.getMinutes() + offsetMinutes);
++
++    const diff = (classStart - mockNow) / 60000; // ph├║t
++
++    // Trong v├▓ng 30 ph├║t tr╞░ß╗¢c v├á 90 ph├║t sau khi lß╗¢p bß║»t ─æß║ºu (─æ├ú bao gß╗ôm offset)
++    if (diff <= 30 && diff > -90) {
++      return { ...item, _appliedOffset: offsetMinutes, _diff: diff };
++    }
++  }
++  return null;
++}
++
++// ---------------------------------------------------------
++// TEST RUNNER
++// ---------------------------------------------------------
++let passed = 0;
++let total = 0;
++
++function assert(condition, message) {
++  total++;
++  if (condition) {
++    passed++;
++    console.log(`Γ£à PASS: ${message}`);
++  } else {
++    console.error(`Γ¥î FAIL: ${message}`);
++  }
++}
++
++// Giß║ú lß║¡p h├┤m nay l├á "Thß╗⌐ 2" (getDay() === 1)
++const baseDate = new Date("2026-04-06T00:00:00"); // 6/4/2026 l├á Thß╗⌐ 2
++
++const mockSchedule = [
++  { name: "C╞í Sß╗ƒ Dß╗» Liß╗çu", teacher: "Nguyen Van A", day: "Thß╗⌐ 2", time: "10h00" },
++  { name: "Lß║¡p tr├¼nh Web", teacher: "Tran Thi B", day: "Thß╗⌐ 2", time: "13h30" }
++];
++
++console.log("=== Bß║»t ─æß║ºu Unit Tests cho getImminentClass ===");
++
++// 1. B├¼nh th╞░ß╗¥ng - ─Éang l├á 09:40 Thß╗⌐ 2 (Tr╞░ß╗¢c giß╗¥ hß╗ìc 20p)
++let mockNow1 = new Date(baseDate);
++mockNow1.setHours(9, 40, 0, 0);
++let res1 = getImminentClass(mockSchedule, {}, mockNow1);
++assert(res1 && res1.name === "C╞í Sß╗ƒ Dß╗» Liß╗çu" && res1._diff === 20, "Tß╗▒ bß║»t lß╗¢p 10h00 l├║c 09h40 (Kh├┤ng Offset)");
++
++// 2. B├¼nh th╞░ß╗¥ng - ─Éang l├á 09:20 Thß╗⌐ 2 (Tr╞░ß╗¢c giß╗¥ hß╗ìc 40p -> Qu├í sß╗¢m, ko bß║»t)
++let mockNow2 = new Date(baseDate);
++mockNow2.setHours(9, 20, 0, 0);
++let res2 = getImminentClass(mockSchedule, {}, mockNow2);
++assert(res2 === null, "Ch╞░a bß║»t lß╗¢p l├║c 09h20 (C├▓n 40 ph├║t nß╗»a mß╗¢i v├áo)");
++
++// 3. Offset Sß╗¢m (+ 15 ph├║t) - ─Éang l├á 09h20
++// Lß╗¢p chuyß╗ân th├ánh 10h15. So vß╗¢i 09h20 th├¼ c├▓n tß║¡n 55 ph├║t nß╗»a (kh├┤ng bß║»t)
++let mockNow3 = new Date(baseDate);
++mockNow3.setHours(9, 20, 0, 0);
++let offsetV1 = { "Nguyen Van A": { offset: 15 } };
++let res3 = getImminentClass(mockSchedule, offsetV1, mockNow3);
++assert(res3 === null, "Lß╗¢p CSDL dß╗¥i xuß╗æng 10h15, l├║c 09h20 ch╞░a thß╗â bß║»t.");
++
++// 4. Offset Trß╗à ( - 15 ph├║t ) - ─Éang l├á 09h20
++// Lß╗¢p chuyß╗ân th├ánh 09h45. So vß╗¢i 09h20 th├¼ classStart (09h45) - now (09h20) = 25 ph├║t. ─Éß╗º ─æiß╗üu kiß╗çn <= 30.
++let offsetV2 = { "Nguyen Van A": { offset: -15 } };
++let res4 = getImminentClass(mockSchedule, offsetV2, mockNow3);
++assert(res4 && res4.name === "C╞í Sß╗ƒ Dß╗» Liß╗çu" && res4._diff === 25, "Lß╗¢p CSDL hß╗ìc sß╗¢m l├║c 09h45, l├║c 09h20 bß║»t ─æ╞░ß╗úc th├ánh c├┤ng (diff = 25p).");
++
++// 5. Qu├í Giß╗¥ (─æ├ú qu├í 90 ph├║t) - Lß╗¢p 10h00, l├║c n├áy l├á 11h40, diff = -100
++let mockNow5 = new Date(baseDate);
++mockNow5.setHours(11, 40, 0, 0);
++let res5 = getImminentClass(mockSchedule, {}, mockNow5);
++assert(res5 === null, "─É├ú qu├í 90 ph├║t lß╗¢p hß╗ìc (Hß║┐t hß║ín). Trß║ú vß╗ü null.");
++
++console.log(`\n=== Tß╗òng kß║┐t: ${passed}/${total} test pass! ===\n`);

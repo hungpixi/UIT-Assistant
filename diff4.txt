@@ -1,0 +1,13 @@
+﻿diff --git a/dashboard.html b/dashboard.html
+index 01e7920..90b1966 100644
+--- a/dashboard.html
++++ b/dashboard.html
+@@ -30,7 +30,7 @@
+       <div class="content-area">
+         <!-- TAB: SCHEDULE -->
+         <section id="tab-schedule" class="tab-pane active">
+-          <h3>Tß╗òng Quan Lß╗ïch Hß╗ìc Trong Tuß║ºn</h3>
++          <h3>Lß╗èCH Hß╗îC TUß║ªN N├ÇY</h3>
+           <div class="schedule-grid" id="scheduleGrid">
+             <!-- Schedule items will be injected here -->
+             <p class="text-muted">─Éang tß║úi dß╗» liß╗çu...</p>

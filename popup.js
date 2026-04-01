@@ -75,21 +75,33 @@ document.addEventListener('DOMContentLoaded', () => {
   if (btnAutoTeams) {
     btnAutoTeams.addEventListener('click', () => {
       chrome.tabs.query({ url: ["*://teams.cloud.microsoft/*", "*://teams.microsoft.com/*"] }, (tabs) => {
-        if (tabs && tabs.length > 0 && tabs[0].id) {
-          chrome.tabs.sendMessage(tabs[0].id, { type: "RUN_MACRO", target: "teams" }, (res) => {
+        if (!tabs || tabs.length === 0) {
+          btnAutoTeams.innerHTML = "🚨 Lỗi: Bạn chưa mở tab Teams!";
+          btnAutoTeams.style.background = "#ff4d4f";
+          btnAutoTeams.style.color = "#fff";
+          return;
+        }
+        
+        // Ưu tiên tab đang active (nếu user có nhiều tab Teams)
+        let targetTab = tabs.find(t => t.active) || tabs[0];
+
+        if (targetTab && targetTab.id) {
+          chrome.tabs.sendMessage(targetTab.id, { type: "RUN_MACRO", target: "teams" }, (res) => {
              if (chrome.runtime.lastError) {
                console.warn("Error sending message to tab:", chrome.runtime.lastError.message);
+               btnAutoTeams.innerHTML = "🚨 Lỗi: Sang Tab Teams nhấn F5 tải lại!";
+               btnAutoTeams.style.background = "#ff4d4f";
+               btnAutoTeams.style.color = "#fff";
+               btnAutoTeams.style.fontSize = "12px";
                return;
              }
              if (res && res.status === "started") {
-               btnAutoTeams.innerHTML = "✅ Đang Chạy Macro...";
+               btnAutoTeams.innerHTML = "⏳ Đang Thiết Lập Chuông...";
                btnAutoTeams.style.background = "#fff";
                btnAutoTeams.style.color = "#28a745";
                btnAutoTeams.style.pointerEvents = "none";
              }
           });
-        } else {
-          alert("🚨 Bạn chưa mở tab Teams! Mở Teams trước khi Kích Hoạt Auto-Join.");
         }
       });
     });
